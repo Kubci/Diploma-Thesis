@@ -48,4 +48,5 @@
 *.lastbuildstate
 *.vs
 *.suo
+*.obj.enc
 
