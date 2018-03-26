@@ -38,3 +38,14 @@
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+*.VC.VC.opendb
+*.VC.db
+*.ilk
+*.pdb
+*.idb
+*.log
+*.tlog
+*.lastbuildstate
+*.vs
+*.suo
+

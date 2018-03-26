@@ -1,9 +1,14 @@
 #include "opencv2/opencv.hpp"
+#include "MaxTree.h"
 
 using namespace cv;
 
 int main(int, char)
 {
+	cv::Mat image = cv::imread("image.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	MaxTree tree(image);
+
+	/*
 	VideoCapture cap(0); // open the default camera
 	if (!cap.isOpened()) // check if we succeeded
 		return -1;
@@ -21,5 +26,6 @@ int main(int, char)
 			break;
 	}
 	// the camera will be deinitialized automatically in VideoCapture destructor
+	*/
 	return 0;
 }

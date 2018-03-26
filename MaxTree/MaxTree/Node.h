@@ -1,18 +1,21 @@
 #pragma once
 #include <vector>
+#include "opencv2\core.hpp"
 
 class Node
 {
-public:
+private:
 	int					level;
 	int					label;
-	Node *				predecessor;
+	cv::Point			representant;
+	Node *				predecessor = nullptr;
 	std::vector<Node*>	successor;
-	//PARAMS?
-	bool				is_Leaf = false;
 
-
-	Node(int level, int label, Node* predecessor);
+public:
+	Node(int level, int label);
 	~Node();
+	void setRepresentant(cv::Point representant);
+	void addSuccessor(Node* successor);
+	void setPredecessor(Node* predecessor);
 };
 
