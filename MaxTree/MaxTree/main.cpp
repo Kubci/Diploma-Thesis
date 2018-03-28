@@ -1,12 +1,18 @@
+#include <iostream>
 #include "opencv2/opencv.hpp"
 #include "MaxTree.h"
 
-using namespace cv;
-
 int main(int, char)
 {
+	clock_t begin = std::clock();
+	
 	cv::Mat image = cv::imread("image.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	MaxTree tree(image);
+	
+	clock_t end = std::clock();
+	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	std::cout << elapsed_secs << std::endl;
+
 
 	/*
 	VideoCapture cap(0); // open the default camera

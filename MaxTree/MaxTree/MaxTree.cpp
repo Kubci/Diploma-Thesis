@@ -16,32 +16,47 @@ MaxTree::MaxTree(cv::Mat image)
 	root = zeroth;
 	labels.push_back(cv::Mat(image.cols, image.rows, CV_32SC1, CvScalar(1)));
 
+	//1-255
 	cv::Mat curr_lvl;
 	cv::Mat curr_labels;
+	cv::Mat curr_stats;
+	cv::Mat centroids;
 	std::map<int, cv::Point> label_representants;
 	std::map<int, std::vector<int>> labels_conjunction;
 
 	for (int i = 1; i < 256; i++)
 	{
 
+		//Threshold
 		curr_lvl = image >= i;
 		if (cv::countNonZero(curr_lvl) == 0){
 			return;
 		}
 
-		int labels_count = cv::connectedComponents(curr_lvl, curr_labels, 4);
+		//Labelling
+		int labels_count = cv::connectedComponentsWithStats(curr_lvl, curr_labels, curr_stats, centroids, 4);
 		labels.push_back(curr_labels.clone());
 		getLabelRepresentants(labels_count, curr_labels, label_representants);
 		
+		//Creating nodes of a level
 		std::vector<Node*> level_nodes;
-		level_nodes.push_back(new Node(i, 0));
+		level_nodes.push_back(new Node(i, 0)); // dummy node to allign labels with array positions
 		for (int k = 1; k < labels_count; k++) {
 			Node* n = new Node(i, k);
 			n->setRepresentant(label_representants[k]);
+			int* row = (int*)curr_stats.ptr(k);
+			n->setBB_width(row[2]);			//CC_STAT_WIDTH
+			n->setBB_height(row[3]);		//CC_STAT_HEIGHT
+			n->setArea(row[4]);				//CC_STAT_AREA
+			cv::Mat roi = cv::Mat(curr_labels, cv::Rect(row[0], row[1], row[2], row[3])) == k;
+			double hu[7] = {0};
+			cv::HuMoments(cv::moments(curr_labels, true), hu);
+			n->setHuMoments(hu);
 			level_nodes.push_back(n);
 		}
 		tree.push_back(level_nodes);
 
+		//Linking tree
 		retrieveLabelConjunction(i, label_representants, labels_conjunction);
 		for (auto prev_label : labels_conjunction) 
 		{
@@ -56,6 +71,13 @@ MaxTree::MaxTree(cv::Mat image)
 	}
 }
 
+void MaxTree::pruneAbove(Node * node)
+{
+	Node* parrent = node->getPredecessor();
+	node->setPredecessor(nullptr);
+	parrent->removeSuccessor(node);
+}
+
 MaxTree::~MaxTree()
 {
 	for (std::vector<Node*> v : tree)
@@ -67,7 +89,7 @@ MaxTree::~MaxTree()
 	}
 }
 
-//TODO odtestovat ze to tak funguje
+
 void MaxTree::getLabelRepresentants(int labels, cv::Mat labelled_image, std::map<int, cv::Point>& representants)
 {
 	int curr_label = 1;

@@ -17,7 +17,7 @@ private:
 
 public:
 	MaxTree(cv::Mat image);
-	MaxTree();
+	void pruneAbove(Node* node);
 	~MaxTree();
 
 private:
