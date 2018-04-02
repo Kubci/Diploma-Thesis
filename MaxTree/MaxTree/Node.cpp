@@ -10,6 +10,21 @@ Node::Node(int level, int label)
 
 Node::~Node(){}
 
+int Node::getLevel()
+{
+	return level;
+}
+
+int Node::getLabel()
+{
+	return label;
+}
+
+std::set<Node*>& Node::getSuccessor()
+{
+	return successor;
+}
+
 void Node::setRepresentant(cv::Point representant)
 {
 	this->representant = representant;

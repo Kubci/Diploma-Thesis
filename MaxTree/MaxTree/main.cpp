@@ -9,6 +9,8 @@ int main(int, char)
 	cv::Mat image = cv::imread("image.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	MaxTree tree(image);
 	
+	tree.reconstructImage();
+
 	clock_t end = std::clock();
 	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	std::cout << elapsed_secs << std::endl;

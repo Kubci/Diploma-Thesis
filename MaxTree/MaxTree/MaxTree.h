@@ -1,7 +1,11 @@
 #pragma once
+//STD
 #include <vector>
 #include <map>
+//THIS
 #include "Node.h"
+#include "Utils.h"
+//CV
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -11,13 +15,16 @@ class MaxTree
 private:
 	std::vector<std::vector<Node*>>	tree;
 	Node *							root = nullptr;
-	std::vector<cv::Mat>			labels;
+	std::vector<cv::Mat>			levels;
 	std::vector<Node*>				leaves;
 	cv::Mat							image;
+	cv::Mat							reconstructed;
 
 public:
 	MaxTree(cv::Mat image);
 	void pruneAbove(Node* node);
+	void reconstructImage();
+	void reconstructImageRec(Node* node);
 	~MaxTree();
 
 private:

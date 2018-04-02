@@ -14,7 +14,7 @@ MaxTree::MaxTree(cv::Mat image)
 	tree[0].push_back(zeroth_background);
 	tree[0].push_back(zeroth);
 	root = zeroth;
-	labels.push_back(cv::Mat(image.cols, image.rows, CV_32SC1, CvScalar(1)));
+	levels.push_back(cv::Mat(image.rows, image.cols, CV_32SC1, CvScalar(1)));
 
 	//1-255
 	cv::Mat curr_lvl;
@@ -35,7 +35,7 @@ MaxTree::MaxTree(cv::Mat image)
 
 		//Labelling
 		int labels_count = cv::connectedComponentsWithStats(curr_lvl, curr_labels, curr_stats, centroids, 4);
-		labels.push_back(curr_labels.clone());
+		levels.push_back(curr_labels.clone());
 		getLabelRepresentants(labels_count, curr_labels, label_representants);
 		
 		//Creating nodes of a level
@@ -78,6 +78,29 @@ void MaxTree::pruneAbove(Node * node)
 	parrent->removeSuccessor(node);
 }
 
+void MaxTree::reconstructImage()
+{
+	reconstructed = cv::Mat(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
+	std::set<Node*>& successors = root->getSuccessor();
+	if (successors.empty()) return;
+	for (Node* s : successors)
+	{
+		reconstructImageRec(s);
+	}
+}
+
+void MaxTree::reconstructImageRec(Node * node)
+{
+	if (node == nullptr) return;
+	AddComponentToImage(reconstructed, levels[node->getLevel()], node->getLabel());
+
+	std::set<Node*>& successors = node->getSuccessor();
+	if (successors.empty()) return;
+	for (Node* s : successors) {
+		reconstructImageRec(s);
+	}
+}
+
 MaxTree::~MaxTree()
 {
 	for (std::vector<Node*> v : tree)
@@ -111,7 +134,7 @@ void MaxTree::getLabelRepresentants(int labels, cv::Mat labelled_image, std::map
 
 void MaxTree::retrieveLabelConjunction(int curr_lvl, std::map<int, cv::Point>& representants, std::map<int, std::vector<int>>& labels_conjuction)
 {
-	cv::Mat prev_lvl = labels[curr_lvl - 1];
+	cv::Mat prev_lvl = levels[curr_lvl - 1];
 
 	for (auto curr_label : representants) 
 	{

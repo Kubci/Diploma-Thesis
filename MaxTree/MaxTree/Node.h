@@ -20,6 +20,9 @@ private:
 public:
 	Node(int level, int label);
 	~Node();
+	int getLevel();
+	int getLabel();
+	std::set<Node*>& getSuccessor();
 	void setRepresentant(cv::Point representant);
 	void addSuccessor(Node* successor);
 	void setPredecessor(Node* predecessor);
