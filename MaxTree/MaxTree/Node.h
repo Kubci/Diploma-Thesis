@@ -15,13 +15,14 @@ private:
 	int					bb_height;
 	int					area;
 	double				huMoments[7] = {0};
-	bool				isActive = true;
+	bool				is_active = true;
 
 public:
 	Node(int level, int label);
 	~Node();
 	int getLevel();
 	int getLabel();
+	int getArea();
 	std::set<Node*>& getSuccessor();
 	void setRepresentant(cv::Point representant);
 	void addSuccessor(Node* successor);
@@ -32,5 +33,7 @@ public:
 	void setHuMoments(double hu[7]);
 	Node* getPredecessor();
 	void removeSuccessor(Node* node);
+	void deactivate();
+	bool isActive();
 };
 

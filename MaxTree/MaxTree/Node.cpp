@@ -20,6 +20,11 @@ int Node::getLabel()
 	return label;
 }
 
+int Node::getArea()
+{
+	return area;
+}
+
 std::set<Node*>& Node::getSuccessor()
 {
 	return successor;
@@ -70,5 +75,15 @@ Node * Node::getPredecessor()
 void Node::removeSuccessor(Node * node)
 {
 	successor.erase(node);
+}
+
+void Node::deactivate()
+{
+	is_active = false;
+}
+
+bool Node::isActive()
+{
+	return is_active;
 }
 

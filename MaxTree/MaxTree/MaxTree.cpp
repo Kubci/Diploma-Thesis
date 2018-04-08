@@ -4,11 +4,11 @@
 MaxTree::MaxTree(cv::Mat image)
 {
 	tree.push_back(std::vector<Node*>());
-
 	this->image = image;
 
 	//case for zero-th layer
 	Node* zeroth_background = new Node(0, 0);
+	zeroth_background->deactivate();
 	Node* zeroth = new Node(0, 1);
 	zeroth->setRepresentant(cv::Point(0, 0));
 	tree[0].push_back(zeroth_background);
@@ -29,7 +29,8 @@ MaxTree::MaxTree(cv::Mat image)
 
 		//Threshold
 		curr_lvl = image >= i;
-		if (cv::countNonZero(curr_lvl) == 0){
+		if (cv::countNonZero(curr_lvl) == 0)
+		{
 			return;
 		}
 
@@ -40,8 +41,10 @@ MaxTree::MaxTree(cv::Mat image)
 		
 		//Creating nodes of a level
 		std::vector<Node*> level_nodes;
-		level_nodes.push_back(new Node(i, 0)); // dummy node to allign labels with array positions
-		for (int k = 1; k < labels_count; k++) {
+		Node * n0 = new Node(i, 0); n0->deactivate();
+		level_nodes.push_back(n0); // dummy node to allign labels with array positions
+		for (int k = 1; k < labels_count; k++) 
+		{
 			Node* n = new Node(i, k);
 			n->setRepresentant(label_representants[k]);
 			int* row = (int*)curr_stats.ptr(k);
@@ -71,49 +74,7 @@ MaxTree::MaxTree(cv::Mat image)
 	}
 }
 
-void MaxTree::pruneAbove(Node * node)
-{
-	Node* parrent = node->getPredecessor();
-	node->setPredecessor(nullptr);
-	parrent->removeSuccessor(node);
-}
-
-void MaxTree::reconstructImage()
-{
-	reconstructed = cv::Mat(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
-	std::set<Node*>& successors = root->getSuccessor();
-	if (successors.empty()) return;
-	for (Node* s : successors)
-	{
-		reconstructImageRec(s);
-	}
-}
-
-void MaxTree::reconstructImageRec(Node * node)
-{
-	if (node == nullptr) return;
-	AddComponentToImage(reconstructed, levels[node->getLevel()], node->getLabel());
-
-	std::set<Node*>& successors = node->getSuccessor();
-	if (successors.empty()) return;
-	for (Node* s : successors) {
-		reconstructImageRec(s);
-	}
-}
-
-MaxTree::~MaxTree()
-{
-	for (std::vector<Node*> v : tree)
-	{
-		for (Node* n : v)
-		{
-			delete n;
-		}
-	}
-}
-
-
-void MaxTree::getLabelRepresentants(int labels, cv::Mat labelled_image, std::map<int, cv::Point>& representants)
+void MaxTree::getLabelRepresentants(int labels, cv::Mat& labelled_image, std::map<int, cv::Point>& representants)
 {
 	int curr_label = 1;
 	for (int y = 0; y < labelled_image.rows; y++) 
@@ -148,4 +109,120 @@ void MaxTree::retrieveLabelConjunction(int curr_lvl, std::map<int, cv::Point>& r
 		}	
 	}
 
+}
+
+void MaxTree::pruneAbove(Node * node)
+{
+	Node* parrent = node->getPredecessor();
+	node->setPredecessor(nullptr);
+	parrent->removeSuccessor(node);
+	deactivateRec(node);
+}
+
+void MaxTree::deactivateRec(Node* node)
+{
+	node->deactivate();
+	std::set<Node*> successors = node->getSuccessor();
+	if (successors.empty())
+	{
+		return;
+	}
+
+	for (Node * n : successors)
+	{
+		n->deactivate();
+	}
+}
+
+
+void MaxTree::reconstructImage()
+{
+	reconstructed = cv::Mat(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
+	std::set<Node*>& successors = root->getSuccessor();
+	if (successors.empty()) return;
+	for (Node* s : successors)
+	{
+		reconstructImageRec(s);
+	}
+}
+
+/*
+void MaxTree::reconstructImage()
+{
+	std::vector<std::vector<bool>> activeLabels;
+	for (std::vector<Node*> lvl : tree)
+	{	
+		std::vector<bool> active_in_lvl;
+		for (Node* n : lvl)
+		{
+			if (n->isActive())
+			{
+				active_in_lvl.push_back(true);
+			}else
+			{
+				active_in_lvl.push_back(false);
+			}
+		}
+		activeLabels.push_back(active_in_lvl);
+	}
+	reconstructed = cv::Mat(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
+	for (int i = 1; i < tree.size(); i++)
+	{
+		AddComponentsToImage(reconstructed, levels[i], activeLabels[i]);
+	}
+}
+*/
+
+void MaxTree::reconstructImageRec(Node * node)
+{
+	if (node == nullptr) return;
+	AddComponentToImage(reconstructed, levels[node->getLevel()], node->getLabel());
+
+	std::set<Node*>& successors = node->getSuccessor();
+	if (successors.empty()) return;
+	for (Node* s : successors) 
+	{
+		reconstructImageRec(s);
+	}
+}
+
+void MaxTree::areaAttributeOpening(int size)
+{
+	std::set<Node*>& successors = root->getSuccessor();
+	if (successors.empty()) return;
+	for (Node* s : successors)
+	{
+		areaAttributeOpeningRec(size, s);
+	}
+}
+
+void MaxTree::areaAttributeOpeningRec(int size, Node * node)
+{
+	if (node->getArea() < size)
+	{
+		pruneAbove(node);
+		return;
+	}
+
+	std::set<Node*> successors = node->getSuccessor();
+	if (successors.empty())
+	{
+		return;
+	}
+
+	for (Node * n : successors)
+	{
+		areaAttributeOpeningRec(size, n);
+	}
+}
+
+MaxTree::~MaxTree()
+{
+	for (std::vector<Node*> v : tree)
+	{
+		for (Node* n : v)
+		{
+			delete n;
+		}
+	}
 }

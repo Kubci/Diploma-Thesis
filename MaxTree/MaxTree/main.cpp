@@ -9,6 +9,7 @@ int main(int, char)
 	cv::Mat image = cv::imread("image.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	MaxTree tree(image);
 	
+	tree.areaAttributeOpening(500);
 	tree.reconstructImage();
 
 	clock_t end = std::clock();
