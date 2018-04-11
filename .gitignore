@@ -50,3 +50,7 @@
 *.suo
 *.obj.enc
 
+#images
+*.jpg
+*.tif
+
