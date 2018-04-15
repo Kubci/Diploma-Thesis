@@ -1,7 +1,7 @@
-#include "MaxTree.h"
+#include "MaxTreeNaive.h"
 
 
-MaxTree::MaxTree(cv::Mat image)
+MaxTreeNaive::MaxTreeNaive(cv::Mat image)
 {
 	tree.push_back(std::vector<Node*>());
 	this->image = image;
@@ -74,7 +74,7 @@ MaxTree::MaxTree(cv::Mat image)
 	}
 }
 
-void MaxTree::getLabelRepresentants(int labels, cv::Mat& labelled_image, std::map<int, cv::Point>& representants)
+void MaxTreeNaive::getLabelRepresentants(int labels, cv::Mat& labelled_image, std::map<int, cv::Point>& representants)
 {
 	int curr_label = 1;
 	for (int y = 0; y < labelled_image.rows; y++) 
@@ -93,7 +93,7 @@ void MaxTree::getLabelRepresentants(int labels, cv::Mat& labelled_image, std::ma
 
 }
 
-void MaxTree::retrieveLabelConjunction(int curr_lvl, std::map<int, cv::Point>& representants, std::map<int, std::vector<int>>& labels_conjuction)
+void MaxTreeNaive::retrieveLabelConjunction(int curr_lvl, std::map<int, cv::Point>& representants, std::map<int, std::vector<int>>& labels_conjuction)
 {
 	cv::Mat prev_lvl = levels[curr_lvl - 1];
 
@@ -111,7 +111,7 @@ void MaxTree::retrieveLabelConjunction(int curr_lvl, std::map<int, cv::Point>& r
 
 }
 
-void MaxTree::pruneAbove(Node * node)
+void MaxTreeNaive::pruneAbove(Node * node)
 {
 	Node* parrent = node->getPredecessor();
 	node->setPredecessor(nullptr);
@@ -119,7 +119,7 @@ void MaxTree::pruneAbove(Node * node)
 	deactivateRec(node);
 }
 
-void MaxTree::deactivateRec(Node* node)
+void MaxTreeNaive::deactivateRec(Node* node)
 {
 	node->deactivate();
 	std::set<Node*> successors = node->getSuccessor();
@@ -135,7 +135,7 @@ void MaxTree::deactivateRec(Node* node)
 }
 
 
-void MaxTree::reconstructImage()
+void MaxTreeNaive::reconstructImage()
 {
 	reconstructed = cv::Mat(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
 	std::set<Node*>& successors = root->getSuccessor();
@@ -173,7 +173,7 @@ void MaxTree::reconstructImage()
 }
 */
 
-void MaxTree::reconstructImageRec(Node * node)
+void MaxTreeNaive::reconstructImageRec(Node * node)
 {
 	if (node == nullptr) return;
 	AddComponentToImage(reconstructed, levels[node->getLevel()], node->getLabel());
@@ -186,7 +186,7 @@ void MaxTree::reconstructImageRec(Node * node)
 	}
 }
 
-void MaxTree::areaAttributeOpening(int size)
+void MaxTreeNaive::areaAttributeOpening(int size)
 {
 	std::set<Node*>& successors = root->getSuccessor();
 	if (successors.empty()) return;
@@ -196,7 +196,7 @@ void MaxTree::areaAttributeOpening(int size)
 	}
 }
 
-void MaxTree::areaAttributeOpeningRec(int size, Node * node)
+void MaxTreeNaive::areaAttributeOpeningRec(int size, Node * node)
 {
 	if (node->getArea() < size)
 	{
@@ -216,7 +216,7 @@ void MaxTree::areaAttributeOpeningRec(int size, Node * node)
 	}
 }
 
-MaxTree::~MaxTree()
+MaxTreeNaive::~MaxTreeNaive()
 {
 	for (std::vector<Node*> v : tree)
 	{

@@ -13,7 +13,7 @@
 //filtering constants
 #define FILTER_AREA = 0
 
-class MaxTree
+class MaxTreeNaive
 {
 private:
 	std::vector<std::vector<Node*>>	tree;
@@ -23,11 +23,11 @@ private:
 	cv::Mat							reconstructed;
 
 public:
-	MaxTree(cv::Mat image);
+	MaxTreeNaive(cv::Mat image);
 	void reconstructImage();
 	void areaAttributeOpening(int size);
 	//void filter(); // should be a genarall function wit param variability
-	~MaxTree();
+	~MaxTreeNaive();
 
 private:
 	void getLabelRepresentants	(int labels, cv::Mat& labelled_image, std::map<int, cv::Point> & representants);
