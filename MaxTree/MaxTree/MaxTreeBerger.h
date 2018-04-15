@@ -9,15 +9,19 @@ class MaxTreeBerger
 public:
 
 	cv::Mat image;
-	SetUF<cv::Point>* root = nullptr;
+	cv::Mat reconstructed;
+	SetUF<PixelDataCarrier>* root = nullptr;
 
 	MaxTreeBerger(cv::Mat& image);
+	void reconstruct();
 	~MaxTreeBerger();
 
 private:
+	void reconstructRec(SetUF<PixelDataCarrier>* root);
 	void retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixels);
 	int index(cv::Point p);
 	int index(int x, int y);
-	void neighbours(cv::Point p, SetUF<cv::Point>** parent, std::vector< SetUF<cv::Point>* >& neighbs);
+	void neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, std::vector< SetUF<PixelDataCarrier>* >& neighbours);
+
 };
 

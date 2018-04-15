@@ -1,48 +1,68 @@
 #include "MaxTreeBerger.h"
 
-MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image)
+MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(image)
 {
-	SetUF<cv::Point>* set_uf;
-	SetUF<cv::Point>** m_tree	= new SetUF<cv::Point>*[image.rows * image.cols]{ 0 }; // array of pointers to set containing cv::Point
-	SetUF<cv::Point>** ef_mTree = new SetUF<cv::Point>*[image.rows * image.cols]{ 0 }; // mtree structure with compression for effectivity
-	cv::Point* connect			= new cv::Point[image.rows * image.cols];
+	SetUF<PixelDataCarrier>* set_uf;
+	SetUF<PixelDataCarrier>** repr	= new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // pointer from root of component in zpar to root of the same component in tree hierarchy;
+	SetUF<PixelDataCarrier>** zpar  = new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // structure to track connected components effectively
+
+	std::fill_n(repr, image.rows * image.cols, (SetUF<PixelDataCarrier>*) 0);
+	std::fill_n(zpar, image.rows * image.cols, (SetUF<PixelDataCarrier>*) 0);
 
 	std::vector<PixelDataCarrier* > pixels;
 	std::vector<PixelDataCarrier* > pixels_sorted(pixels);
 	retrievePixelsAsVector(pixels);
 	RadixSort(pixels, pixels_sorted, 8);
 
-	std::vector<SetUF<cv::Point>* > neigh;
+	std::vector<SetUF<PixelDataCarrier>* > neigh;
+	neigh.reserve(8);
 
-	for (int i = pixels_sorted.size()-1; i >= 0; i--) {
-		PixelDataCarrier* pdc = pixels_sorted[i];					// gets processed pixel
-		
-		SetUF<cv::Point>* s1 = set_uf->makeSet(pdc->data);			// make-set for m_tree
-		SetUF<cv::Point>* s2 = set_uf->makeSet(pdc->data);			// make-set for ef_mTree
+	for (int i = pixels_sorted.size()-1; i >= 0; i--) 
+	{
+		PixelDataCarrier* pdc = pixels_sorted[i];						// get processed pixel
+		SetUF<PixelDataCarrier>* s1 = set_uf->makeSet(*pdc);			// make-set for tree hierarchy
+		SetUF<PixelDataCarrier>* s2 = set_uf->makeSet(*pdc);			// make-set for zpar
 
 		int idx = index(pdc->data);
-		m_tree[idx] = s1;											// storing 
-		ef_mTree[idx] = s2;
-		connect[idx] = pdc->data;
+		repr[idx] = s1;												
+		zpar[idx] = s2;
 
-		neighbours(pdc->data, ef_mTree, neigh);						// find neighbours
-		for (SetUF<cv::Point>* n : neigh) {
-			SetUF<cv::Point>* n_rep = set_uf->find(n);
-			if (s2->parent == n_rep) continue;
-			set_uf->unionInOrder(s1, m_tree[index(connect[index(n_rep->item)])]);
-			
-			SetUF<cv::Point>* head = set_uf->unionByRank(s2, n_rep);	// union by rank
-			connect[index(head->item)] = pdc->data;						// pointer from root of ufSet to root of the same component in m_tree;
-		}
 		neigh.clear();
+		neighbours(pdc->data, zpar, neigh);								// find neighbours
+		for (SetUF<PixelDataCarrier>* n : neigh) {
+			SetUF<PixelDataCarrier>* n_rep = set_uf->find(n);			// get representant of zpar component
+			if (s2->parent == n_rep) continue;
+			set_uf->unionInOrder(s1, repr[index(n_rep->item.data)]);	// hang component under s1, to create hierarchy
+			
+			SetUF<PixelDataCarrier>* head = set_uf->unionByRank(s2, n_rep);	// union by rank in zpar
+			repr[index(head->item.data)] = s1;							
+		}
 	}
-	root = m_tree[index(pixels_sorted[0]->data)];
+	root = repr[index(pixels_sorted[0]->data)];
 
+	//free used arrays
+	delete[] repr;
+	delete[] zpar;
 
+	for (auto a : pixels) 
+	{
+		delete a;
+	}
 }
 
-MaxTreeBerger::~MaxTreeBerger()
+void MaxTreeBerger::reconstruct()
 {
+	reconstructed = 0;
+	reconstructRec(root);
+}
+
+void MaxTreeBerger::reconstructRec(SetUF<PixelDataCarrier>* root)
+{
+	reconstructed.at<uchar>(root->item.data) = root->item.sort_value;
+	for (SetUF<PixelDataCarrier>* ch : root->successors) 
+	{
+		reconstructRec(ch);
+	}
 }
 
 void MaxTreeBerger::retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixels)
@@ -55,7 +75,6 @@ void MaxTreeBerger::retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixe
 			pixels.push_back(new PixelDataCarrier(row[x], cv::Point(x, y)));
 		}
 	}
-
 }
 
 int MaxTreeBerger::index(cv::Point p)
@@ -66,14 +85,13 @@ int MaxTreeBerger::index(cv::Point p)
 int MaxTreeBerger::index(int x, int y)
 {
 	if (x < 0 || y < 0 || x >= image.cols || y >= image.rows) return -1;
-	return x + y * image.rows;
+	return x + y * image.cols;
 }
-
 
 // 0 1 2
 // 7   3
 // 6 5 4
-void MaxTreeBerger::neighbours(cv::Point p, SetUF<cv::Point>** parent, std::vector< SetUF<cv::Point>* >& neighbs)
+void MaxTreeBerger::neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, std::vector< SetUF<PixelDataCarrier>* >& neighbours)
 {
 	int i0 = index(p.x - 1, p.y - 1);
 	int i1 = index(p.x    , p.y - 1);
@@ -96,8 +114,12 @@ void MaxTreeBerger::neighbours(cv::Point p, SetUF<cv::Point>** parent, std::vect
 
 	for (int i : indcs) {
 		if (i == -1) continue;
-		SetUF<cv::Point>* n = parent[i];
+		SetUF<PixelDataCarrier>* n = ef_mTree[i];
 		if (n == 0) continue;
-		neighbs.push_back(n);
+		neighbours.push_back(n);
 	}
+}
+
+MaxTreeBerger::~MaxTreeBerger()
+{
 }

@@ -20,6 +20,7 @@ public:
 	static SetUF<T>* unionInOrder(SetUF<T>* first, SetUF<T>* second);
 	static SetUF<T>* find(SetUF<T>* item);
 	static SetUF<T>* findRec(SetUF<T>* item);
+	static SetUF<T>* findRec(SetUF<T>* set, std::unordered_set<SetUF<T>*>& successors);
 	static SetUF<T>* findWithoutCompression(SetUF<T>* item);
 	static void		 deleteSet(SetUF<T>* item);
 	void			 deleteSet();
@@ -77,25 +78,26 @@ SetUF<T>* SetUF<T>::unionByRank(SetUF<T>* first, SetUF<T>* second)
 template<typename T>
 inline SetUF<T>* SetUF<T>::unionInOrder(SetUF<T>* first, SetUF<T>* second)
 {
-	SetUF<T>* repre_first = find(first);
-	SetUF<T>* repre_second = find(second);
+	//SetUF<T>* repre_first = find(first);
+	//SetUF<T>* repre_second = find(second);
 
-	if (repre_first == repre_second)
+	if (first == second)
 	{
-		return repre_first;
+		return first;
 	}
 
-	repre_first->successors.insert(repre_second);
-	repre_second->parent = repre_first;
-
-	repre_first->size += repre_second->size;
-	return repre_first;
+	first->successors.insert(second);
+	second->parent = first;
+	first->size += second->size;
+	return first;
 }
 
 template <typename T>
-SetUF<T>* SetUF<T>::find(SetUF<T>* item)
+SetUF<T>* SetUF<T>::find(SetUF<T>* set)
 {
-	SetUF<T>* current = item;
+	//return findRec(set);
+
+	SetUF<T>* current = set;
 	std::vector<SetUF<T>*> to_rewire;
 	while (current->parent != current)
 	{
@@ -114,31 +116,31 @@ SetUF<T>* SetUF<T>::find(SetUF<T>* item)
 }
 
 template <typename T>
-SetUF<T>* findRec(SetUF<T>* item, std::vector<SetUF<T>*>& successors)
+SetUF<T>* SetUF<T>::findRec(SetUF<T>* set, std::unordered_set<SetUF<T>*>& successors)
 {
-	if (item->parent == item) {
-		item->successors.insert(successors);
-		return item;
+	if (set->parent == set) {
+		set->successors.insert(successors.begin(), successors.end());
+		return set;
 	}
-	successors.insert(item);
-	item->parent->successors.erase(item);
-	item->parent = findRec(item->parent, successors);
-	return item->parent;
+	successors.insert(set);
+	set->parent->successors.erase(set);
+	set->parent = findRec(set->parent, successors);
+	return set->parent;
 }
 
 template <typename T>
-SetUF<T>* SetUF<T>::findRec(SetUF<T>* item)
+SetUF<T>* SetUF<T>::findRec(SetUF<T>* set)
 {
-	std::vector<SetUF<T>*> to_rewire;
-	SetUF<T>* representant = findRec(item, to_rewire);
+	std::unordered_set<SetUF<T>*> to_rewire;
+	SetUF<T>* representant = findRec(set, to_rewire);
 
 	return representant;
 }
 
 template <typename T>
-SetUF<T>* SetUF<T>::findWithoutCompression(SetUF<T>* item)
+SetUF<T>* SetUF<T>::findWithoutCompression(SetUF<T>* set)
 {
-	SetUF<T>* current = item;
+	SetUF<T>* current = set;
 	while (current->parent != current)
 	{
 		current = current->parent;
@@ -147,9 +149,9 @@ SetUF<T>* SetUF<T>::findWithoutCompression(SetUF<T>* item)
 }
 
 template<typename T>
-void SetUF<T>::deleteRec(SetUF<T>* node)
+void SetUF<T>::deleteRec(SetUF<T>* set)
 {
-	for (SetUF<T>* n : node->successors)
+	for (SetUF<T>* n : set->successors)
 	{
 		deleteRec(n);
 	}
