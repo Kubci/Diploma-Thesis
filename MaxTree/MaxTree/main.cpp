@@ -12,8 +12,8 @@ int main(int, char)
 	std::cout << sizeof(void*) << std::endl;
 	cv::Mat image = cv::imread("image.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	MaxTreeBerger m_tree(image);
-	MaxTreeNaive m_tree2(image);
-	m_tree.reconstruct();
+//	MaxTreeNaive m_tree2(image);
+//	m_tree.reconstruct();
 	clock_t end = std::clock();
 	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	std::cout << elapsed_secs << std::endl;

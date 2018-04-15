@@ -25,25 +25,16 @@ public:
 	static void		 deleteSet(SetUF<T>* item);
 	void			 deleteSet();
 	
-	// Destroys all SetUF created. Use only for cleanup. Otherwise programmer 
-	// is responsible for deleting object.
-	static void destroy();
-
 	~SetUF();
 private:
 	SetUF(T item);
 	static void deleteRec(SetUF<T>* node);
-	static std::unordered_set<SetUF<T>*> all_created;
 };
-
-template <typename T>
-std::unordered_set<SetUF<T>*> SetUF<T>::all_created;
 
 template <typename T>
 SetUF<T>* SetUF<T>::makeSet(T item)
 {
 	SetUF<T>* singleton = new SetUF<T>(item);
-	all_created.insert(singleton);
 	return singleton;
 }
 
@@ -78,9 +69,6 @@ SetUF<T>* SetUF<T>::unionByRank(SetUF<T>* first, SetUF<T>* second)
 template<typename T>
 inline SetUF<T>* SetUF<T>::unionInOrder(SetUF<T>* first, SetUF<T>* second)
 {
-	//SetUF<T>* repre_first = find(first);
-	//SetUF<T>* repre_second = find(second);
-
 	if (first == second)
 	{
 		return first;
@@ -95,8 +83,7 @@ inline SetUF<T>* SetUF<T>::unionInOrder(SetUF<T>* first, SetUF<T>* second)
 template <typename T>
 SetUF<T>* SetUF<T>::find(SetUF<T>* set)
 {
-	//return findRec(set);
-
+	return findRec(set);
 	SetUF<T>* current = set;
 	std::vector<SetUF<T>*> to_rewire;
 	while (current->parent != current)
@@ -116,25 +103,11 @@ SetUF<T>* SetUF<T>::find(SetUF<T>* set)
 }
 
 template <typename T>
-SetUF<T>* SetUF<T>::findRec(SetUF<T>* set, std::unordered_set<SetUF<T>*>& successors)
-{
-	if (set->parent == set) {
-		set->successors.insert(successors.begin(), successors.end());
-		return set;
-	}
-	successors.insert(set);
-	set->parent->successors.erase(set);
-	set->parent = findRec(set->parent, successors);
-	return set->parent;
-}
-
-template <typename T>
 SetUF<T>* SetUF<T>::findRec(SetUF<T>* set)
 {
-	std::unordered_set<SetUF<T>*> to_rewire;
-	SetUF<T>* representant = findRec(set, to_rewire);
-
-	return representant;
+	if (set->parent == set)	return set;
+	set->parent = findRec(set->parent);
+	return set->parent;
 }
 
 template <typename T>
@@ -170,15 +143,6 @@ template <typename T>
 void SetUF<T>::deleteSet()
 {
 	deleteSet(find(this));
-}
-
-template <typename T>
-void SetUF<T>::destroy()
-{
-	for (SetUF<T>* s : all_created)
-	{
-		delete s;
-	}
 }
 
 template <typename T>

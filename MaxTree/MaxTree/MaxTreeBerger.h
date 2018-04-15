@@ -21,7 +21,7 @@ private:
 	void retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixels);
 	int index(cv::Point p);
 	int index(int x, int y);
-	void neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, std::vector< SetUF<PixelDataCarrier>* >& neighbours);
+	void neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, SetUF<PixelDataCarrier>* (&neighbours)[9]);
 
 };
 
