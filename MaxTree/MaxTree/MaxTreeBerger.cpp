@@ -50,11 +50,11 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 			repr[index(head->item.data)] = s1;							
 		}
 	}
-	root = repr[index(pixels_sorted[0]->data)];
+	tree = parent;
 
 	delete[] zpar;
 	delete[] repr;
-	delete[] parent;
+	//delete[] parent;
 	for (auto a : pixels) 
 	{
 		delete a;
