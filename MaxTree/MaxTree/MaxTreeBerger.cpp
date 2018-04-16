@@ -1,8 +1,10 @@
 #include "MaxTreeBerger.h"
 
+//problem pretoze nemam z rootu smerom dole ukazovatele
 MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(image)
 {
 	SetUF<PixelDataCarrier>* set_uf;
+	SetUF<PixelDataCarrier>** parent = new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 };
 	SetUF<PixelDataCarrier>** repr	= new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // pointer from root of component in zpar to root of the same component in tree hierarchy;
 	SetUF<PixelDataCarrier>** zpar  = new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // structure to track connected components effectively
 
@@ -12,15 +14,25 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	retrievePixelsAsVector(pixels);
 	RadixSort(pixels, pixels_sorted, 8);
 
-	SetUF<PixelDataCarrier>* neighb[9];
+	// Optimalization, so 
+	SetUF<PixelDataCarrier>* parent_sets = new SetUF<PixelDataCarrier>[image.rows * image.cols];
+	SetUF<PixelDataCarrier>* zpar_sets = new SetUF<PixelDataCarrier>[image.rows * image.cols];
+	for (PixelDataCarrier* p : pixels) {
+		int idx = index(p->data);
+		parent_sets[idx].item = *p;
+		zpar_sets[idx].item = *p;
+	}
 
+	SetUF<PixelDataCarrier>* neighb[9];
 	for (int i = pixels_sorted.size()-1; i >= 0; i--) 
 	{
-		PixelDataCarrier* pdc = pixels_sorted[i];						// get processed pixel
-		SetUF<PixelDataCarrier>* s1 = set_uf->makeSet(*pdc);			// make-set for tree hierarchy
-		SetUF<PixelDataCarrier>* s2 = set_uf->makeSet(*pdc);			// make-set for zpar
-
+		PixelDataCarrier* pdc = pixels_sorted[i];	
 		int idx = index(pdc->data);
+		
+		SetUF<PixelDataCarrier>* s1 = &parent_sets[idx];
+		SetUF<PixelDataCarrier>* s2 = &zpar_sets[idx];
+
+		parent[idx] = s1;
 		repr[idx] = s1;												
 		zpar[idx] = s2;
 
@@ -40,10 +52,9 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	}
 	root = repr[index(pixels_sorted[0]->data)];
 
-	//free used arrays
-	delete[] repr;
 	delete[] zpar;
-
+	delete[] repr;
+	delete[] parent;
 	for (auto a : pixels) 
 	{
 		delete a;
@@ -58,11 +69,13 @@ void MaxTreeBerger::reconstruct()
 
 void MaxTreeBerger::reconstructRec(SetUF<PixelDataCarrier>* root)
 {
+	/*
 	reconstructed.at<uchar>(root->item.data) = root->item.sort_value;
 	for (SetUF<PixelDataCarrier>* ch : root->successors) 
 	{
 		reconstructRec(ch);
 	}
+	*/
 }
 
 void MaxTreeBerger::retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixels)
@@ -118,4 +131,5 @@ void MaxTreeBerger::neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, 
 
 MaxTreeBerger::~MaxTreeBerger()
 {
+	delete[] tree;
 }

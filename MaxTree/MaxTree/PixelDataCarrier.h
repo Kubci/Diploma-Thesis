@@ -9,6 +9,7 @@ public:
 
 	PixelDataCarrier(int sort_value, cv::Point data);
 	PixelDataCarrier(int sort_value);
+	PixelDataCarrier();
 	~PixelDataCarrier(){};
 };
 

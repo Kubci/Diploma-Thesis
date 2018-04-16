@@ -8,3 +8,7 @@ PixelDataCarrier::PixelDataCarrier(int sort_value, cv::Point data) : sort_value(
 PixelDataCarrier::PixelDataCarrier(int sort_value) : sort_value(sort_value)
 {
 }
+
+PixelDataCarrier::PixelDataCarrier()
+{
+}

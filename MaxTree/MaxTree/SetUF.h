@@ -13,21 +13,21 @@ public:
 	int									rank = 0;
 	int									size = 1;
 	SetUF<T>*							parent = this;
-	std::unordered_set<SetUF<T>*>		successors;
+	//std::unordered_set<SetUF<T>*>		successors;
 
 	static SetUF<T>* makeSet(T item);
 	static SetUF<T>* unionByRank(SetUF<T>* first, SetUF<T>* second);
 	static SetUF<T>* unionInOrder(SetUF<T>* first, SetUF<T>* second);
 	static SetUF<T>* find(SetUF<T>* item);
 	static SetUF<T>* findRec(SetUF<T>* item);
-	static SetUF<T>* findRec(SetUF<T>* set, std::unordered_set<SetUF<T>*>& successors);
 	static SetUF<T>* findWithoutCompression(SetUF<T>* item);
 	static void		 deleteSet(SetUF<T>* item);
 	void			 deleteSet();
 	
+	SetUF();
+	SetUF(T item);
 	~SetUF();
 private:
-	SetUF(T item);
 	static void deleteRec(SetUF<T>* node);
 };
 
@@ -54,7 +54,7 @@ SetUF<T>* SetUF<T>::unionByRank(SetUF<T>* first, SetUF<T>* second)
 		repre_second = tmp;
 	}
 
-	repre_first->successors.insert(repre_second);
+	//repre_first->successors.insert(repre_second);
 	repre_second->parent = repre_first;
 	
 	if (repre_first->rank == repre_second->rank)
@@ -74,7 +74,7 @@ inline SetUF<T>* SetUF<T>::unionInOrder(SetUF<T>* first, SetUF<T>* second)
 		return first;
 	}
 
-	first->successors.insert(second);
+	//first->successors.insert(second);
 	second->parent = first;
 	first->size += second->size;
 	return first;
@@ -89,14 +89,14 @@ SetUF<T>* SetUF<T>::find(SetUF<T>* set)
 	while (current->parent != current)
 	{
 		to_rewire.push_back(current);
-		current->parent->successors.erase(current);
+		//current->parent->successors.erase(current);
 		current = current->parent;
 	}
 
 	for (SetUF<T>* s : to_rewire)
 	{
 		s->parent = current;
-		current->successors.insert(s);
+		//current->successors.insert(s);
 	}
 
 	return current;
@@ -143,6 +143,11 @@ template <typename T>
 void SetUF<T>::deleteSet()
 {
 	deleteSet(find(this));
+}
+
+template<typename T>
+inline SetUF<T>::SetUF()
+{
 }
 
 template <typename T>
