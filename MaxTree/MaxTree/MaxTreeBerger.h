@@ -14,12 +14,13 @@ public:
 
 	MaxTreeBerger(cv::Mat& image);
 	void reconstruct();
+	void areaOpening(int area);
 	~MaxTreeBerger();
 
 private:
 	SetUF<PixelDataCarrier>* dealocate;
+	void computeArea();
 	void canonicalize();
-	void reconstructRec(SetUF<PixelDataCarrier>* root);
 	void retrievePixelsAsVector(std::vector<PixelDataCarrier*> &pixels);
 	int index(cv::Point p) const;
 	int index(int x, int y) const;

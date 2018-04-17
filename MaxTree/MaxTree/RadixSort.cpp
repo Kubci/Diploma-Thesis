@@ -1,5 +1,6 @@
 #include "RadixSort.h"
 
+//TODO optimalizovat
 void RadixSort(std::vector<PixelDataCarrier*>& data_in, std::vector<PixelDataCarrier*>& data_sorted, int sortVal_bitDepth)
 {
 	std::vector<PixelDataCarrier*> zero_val(data_in.size());

@@ -3,6 +3,8 @@
 #include <unordered_set>
 #include <future>
 
+#include "Parameters.h"
+
 template <typename T>
 class SetUF
 {
@@ -12,13 +14,14 @@ public:
 	int									rank = 0;
 	int									size = 1;
 	SetUF<T>*							parent = this;
+	Parameters							params;
+	bool								isActive = true;
+	bool								isCanonical = false;
 
 	static SetUF<T>* makeSet(T item);
 	static SetUF<T>* unionByRank(SetUF<T>* first, SetUF<T>* second);
 	static SetUF<T>* unionInOrder(SetUF<T>* first, SetUF<T>* second);
 	static SetUF<T>* find(SetUF<T>* item);
-	static SetUF<T>* findRec(SetUF<T>* item);
-	static SetUF<T>* findWithoutCompression(SetUF<T>* item);
 	static void		 deleteSet(SetUF<T>* item);
 	void			 deleteSet();
 	
@@ -78,40 +81,9 @@ inline SetUF<T>* SetUF<T>::unionInOrder(SetUF<T>* first, SetUF<T>* second)
 template <typename T>
 SetUF<T>* SetUF<T>::find(SetUF<T>* set)
 {
-	return findRec(set);
-	SetUF<T>* current = set;
-	std::vector<SetUF<T>*> to_rewire;
-	while (current->parent != current)
-	{
-		to_rewire.push_back(current);
-		current = current->parent;
-	}
-
-	for (SetUF<T>* s : to_rewire)
-	{
-		s->parent = current;
-	}
-
-	return current;
-}
-
-template <typename T>
-SetUF<T>* SetUF<T>::findRec(SetUF<T>* set)
-{
 	if (set->parent == set)	return set;
-	set->parent = findRec(set->parent);
+	set->parent = find(set->parent);
 	return set->parent;
-}
-
-template <typename T>
-SetUF<T>* SetUF<T>::findWithoutCompression(SetUF<T>* set)
-{
-	SetUF<T>* current = set;
-	while (current->parent != current)
-	{
-		current = current->parent;
-	}
-	return current;
 }
 
 template<typename T>

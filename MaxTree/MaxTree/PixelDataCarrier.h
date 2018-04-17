@@ -5,6 +5,7 @@ class PixelDataCarrier
 {
 public:
 	int			value;
+	int			rec_value;
 	cv::Point	point;
 
 	PixelDataCarrier(int value, cv::Point data);

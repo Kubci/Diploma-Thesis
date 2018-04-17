@@ -26,7 +26,6 @@ MaxTreeNaive::MaxTreeNaive(cv::Mat image)
 
 	for (int i = 1; i < 256; i++)
 	{
-
 		//Threshold
 		curr_lvl = image >= i;
 		if (cv::countNonZero(curr_lvl) == 0)
@@ -35,7 +34,7 @@ MaxTreeNaive::MaxTreeNaive(cv::Mat image)
 		}
 
 		//Labelling
-		int labels_count = cv::connectedComponentsWithStats(curr_lvl, curr_labels, curr_stats, centroids, 4);
+		int labels_count = cv::connectedComponentsWithStats(curr_lvl, curr_labels, curr_stats, centroids, 8);
 		levels.push_back(curr_labels.clone());
 		getLabelRepresentants(labels_count, curr_labels, label_representants);
 		
@@ -139,7 +138,6 @@ void MaxTreeNaive::reconstructImage()
 {
 	reconstructed = cv::Mat(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
 	std::set<Node*>& successors = root->getSuccessor();
-	if (successors.empty()) return;
 	for (Node* s : successors)
 	{
 		reconstructImageRec(s);
@@ -179,7 +177,6 @@ void MaxTreeNaive::reconstructImageRec(Node * node)
 	AddComponentToImage(reconstructed, levels[node->getLevel()], node->getLabel());
 
 	std::set<Node*>& successors = node->getSuccessor();
-	if (successors.empty()) return;
 	for (Node* s : successors) 
 	{
 		reconstructImageRec(s);
@@ -205,11 +202,6 @@ void MaxTreeNaive::areaAttributeOpeningRec(int size, Node * node)
 	}
 
 	std::set<Node*> successors = node->getSuccessor();
-	if (successors.empty())
-	{
-		return;
-	}
-
 	for (Node * n : successors)
 	{
 		areaAttributeOpeningRec(size, n);

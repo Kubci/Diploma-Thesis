@@ -1,7 +1,6 @@
 #include "MaxTreeBerger.h"
 
-//problem pretoze nemam z rootu smerom dole ukazovatele
-MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(image)
+MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(image.clone())
 {
 	SetUF<PixelDataCarrier>* set_uf;
 	SetUF<PixelDataCarrier>** S		= new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // pointers to pixel sets in sorted order refers to S in paper
@@ -23,8 +22,14 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 		zpar_sets[idx].item = *p;
 	}
 
+	int pos = 0;
+	for (PixelDataCarrier* p : pixels_sorted)
+	{
+		int idx = index(p->point);
+		S[pos++] = &parent_sets[idx];
+	}
+
 	SetUF<PixelDataCarrier>* neighb[9];
-	int position = 0;
 	for (int i = pixels_sorted.size()-1; i >= 0; i--) 
 	{
 		PixelDataCarrier* pdc = pixels_sorted[i];	
@@ -33,11 +38,10 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 		SetUF<PixelDataCarrier>* s1 = &parent_sets[idx];
 		SetUF<PixelDataCarrier>* s2 = &zpar_sets[idx];
 
-		S[position++] = s1;
 		repr[idx] = s1;												
 		zpar[idx] = s2;
 
-		neighbours(pdc->data, zpar, neighb);	
+		neighbours(pdc->point, zpar, neighb);	
 		for (int j = 0; j < 8; j++)
 		{
 			SetUF<PixelDataCarrier>* n = neighb[j];
@@ -46,7 +50,8 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 			SetUF<PixelDataCarrier>* n_rep = set_uf->find(n);			// get representant of zpar component
 			if (s2->parent == n_rep) continue;
 			set_uf->unionInOrder(s1, repr[index(n_rep->item.point)]);	// hang component under s1, to create hierarchy
-			
+			SetUF<PixelDataCarrier>* c2 = repr[index(n_rep->item.point)];
+
 			SetUF<PixelDataCarrier>* head = set_uf->unionByRank(s2, n_rep);	// union by rank in zpar
 			repr[index(head->item.point)] = s1;							
 		}
@@ -61,11 +66,6 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	for (auto a : pixels) { delete a; }
 }
 
-void MaxTreeBerger::reconstruct()
-{
-
-}
-
 void MaxTreeBerger::canonicalize()
 {
 	for (int i = 0; i < image.cols * image.rows; i++)
@@ -76,18 +76,12 @@ void MaxTreeBerger::canonicalize()
 		{
 			p->parent = q->parent;
 		}
+		if (p->item.value != q->item.value) 
+		{
+			p->isCanonical = true;
+		}
 	}
-}
-
-void MaxTreeBerger::reconstructRec(SetUF<PixelDataCarrier>* root)
-{
-	/*
-	reconstructed.at<uchar>(root->item.point) = root->item.sort_value;
-	for (SetUF<PixelDataCarrier>* ch : root->successors) 
-	{
-		reconstructRec(ch);
-	}
-	*/
+	S[0]->isCanonical = true; //root is always cannonical
 }
 
 void MaxTreeBerger::retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixels)
@@ -129,16 +123,62 @@ void MaxTreeBerger::neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, 
 
 	int idx[8] = { i0, i1, i2, i3, i4, i5, i6, i7 };
 	
-	int end_counter = 0;
+	int pos = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		if (i == -1) continue;
-		SetUF<PixelDataCarrier>* n = ef_mTree[i];
+		if (idx[i] == -1) continue;
+		SetUF<PixelDataCarrier>* n = ef_mTree[idx[i]];
 		if (n == 0) continue;
-		neighbours[i] = n;
-		end_counter++;
+		neighbours[pos++] = n;
 	}
-	neighbours[end_counter] = 0;
+	neighbours[pos] = 0;
+}
+
+void MaxTreeBerger::reconstruct()
+{
+	reconstructed.setTo(cv::Scalar(0));
+	if (!S[0]->isActive) return;
+
+	for (int i = 0; i < image.cols * image.rows; i++)
+	{
+		SetUF<PixelDataCarrier>* q = S[i]->parent;
+		SetUF<PixelDataCarrier>* p = S[i];
+
+		if (!q->isActive) 
+		{
+			p->isActive = false;
+		}
+		if (!p->isActive) 
+		{
+			p->item.rec_value = q->item.rec_value;
+		}
+		reconstructed.at<uchar>(p->item.point) = p->item.rec_value;
+	}
+}
+
+void MaxTreeBerger::computeArea()
+{
+	for (int i = image.cols * image.rows - 1; i > 0; i--)
+	{
+		SetUF<PixelDataCarrier>* q = S[i]->parent;
+		q->params.area += S[i]->params.area;
+	}
+}
+
+void MaxTreeBerger::areaOpening(int area)
+{
+	computeArea();
+	for (int i = 0; i < image.cols * image.rows; i++)
+	{
+		SetUF<PixelDataCarrier>* p = S[i];
+		if (p->isCanonical)
+		{
+			if (p->params.area < area)
+			{
+				p->isActive = false;
+			}
+		}
+	}
 }
 
 MaxTreeBerger::~MaxTreeBerger()
