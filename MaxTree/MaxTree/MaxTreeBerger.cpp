@@ -16,7 +16,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 
 	// Optimalization, so 
 	SetUF<PixelDataCarrier>* parent_sets = new SetUF<PixelDataCarrier>[image.rows * image.cols];
-	SetUF<PixelDataCarrier>* zpar_sets = new SetUF<PixelDataCarrier>[image.rows * image.cols];
+	SetUF<PixelDataCarrier>* zpar_sets	= new SetUF<PixelDataCarrier>[image.rows * image.cols];
 	for (PixelDataCarrier* p : pixels) {
 		int idx = index(p->data);
 		parent_sets[idx].item = *p;
@@ -24,7 +24,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	}
 
 	SetUF<PixelDataCarrier>* neighb[9];
-	int position = -1;
+	int position = 0;
 	for (int i = pixels_sorted.size()-1; i >= 0; i--) 
 	{
 		PixelDataCarrier* pdc = pixels_sorted[i];	
@@ -38,9 +38,9 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 		zpar[idx] = s2;
 
 		neighbours(pdc->data, zpar, neighb);	
-		for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
 		{
-			SetUF<PixelDataCarrier>* n = neighb[i];
+			SetUF<PixelDataCarrier>* n = neighb[j];
 			if (n == 0) break;
 
 			SetUF<PixelDataCarrier>* n_rep = set_uf->find(n);			// get representant of zpar component
@@ -54,10 +54,10 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 
 	tree = S;
 	dealocate = parent_sets;
-	delete[] zpar;
 	delete[] repr;
+	delete[] zpar;
 	delete[] zpar_sets;
-	//delete[] parent;
+
 	for (auto a : pixels) 
 	{
 		delete a;
@@ -128,11 +128,11 @@ void MaxTreeBerger::neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, 
 		neighbours[i] = n;
 		end_counter++;
 	}
-	neighbours[end_counter++] = 0;
+	neighbours[end_counter] = 0;
 }
 
 MaxTreeBerger::~MaxTreeBerger()
 {
-	delete[] tree;
 	delete[] dealocate;
+	delete[] tree;
 }
