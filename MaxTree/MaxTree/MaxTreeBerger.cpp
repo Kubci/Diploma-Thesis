@@ -55,6 +55,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	tree = S;
 	dealocate = parent_sets;
 	delete[] zpar;
+	delete[] repr;
 	delete[] zpar_sets;
 	//delete[] parent;
 	for (auto a : pixels) 
