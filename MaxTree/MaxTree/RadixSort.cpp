@@ -24,7 +24,7 @@ void RadixSort(std::vector<PixelDataCarrier*>& data_in, std::vector<PixelDataCar
 
 	for (PixelDataCarrier* dtc : data_in)
 	{
-		unsigned flag = dtc->sort_value & position;
+		unsigned flag = dtc->value & position;
 		if (flag)
 		{
 			ov[one_pos] = dtc;
@@ -48,7 +48,7 @@ void RadixSort(std::vector<PixelDataCarrier*>& data_in, std::vector<PixelDataCar
 
 		for (int j = 0; j < zero_counter; j++)
 		{
-			unsigned flag = zv[j]->sort_value & position;
+			unsigned flag = zv[j]->value & position;
 			if (flag)
 			{
 				ov2[one_pos] = (zv[j]);
@@ -65,7 +65,7 @@ void RadixSort(std::vector<PixelDataCarrier*>& data_in, std::vector<PixelDataCar
 
 		for (int j = 0; j < one_counter; j++)
 		{
-			unsigned flag = ov[j]->sort_value & position;
+			unsigned flag = ov[j]->value & position;
 			if (flag)
 			{
 				ov2[one_pos] = (ov[j]);

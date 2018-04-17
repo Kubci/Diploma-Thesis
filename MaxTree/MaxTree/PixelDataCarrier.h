@@ -4,11 +4,11 @@
 class PixelDataCarrier
 {
 public:
-	int			sort_value;
-	cv::Point	data;
+	int			value;
+	cv::Point	point;
 
-	PixelDataCarrier(int sort_value, cv::Point data);
-	PixelDataCarrier(int sort_value);
+	PixelDataCarrier(int value, cv::Point data);
+	PixelDataCarrier(int value);
 	PixelDataCarrier();
 	~PixelDataCarrier(){};
 };

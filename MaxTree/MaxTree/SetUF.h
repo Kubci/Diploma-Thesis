@@ -3,7 +3,6 @@
 #include <unordered_set>
 #include <future>
 
-// Doubly connected union find set data-structure. 
 template <typename T>
 class SetUF
 {
@@ -13,7 +12,6 @@ public:
 	int									rank = 0;
 	int									size = 1;
 	SetUF<T>*							parent = this;
-	//std::unordered_set<SetUF<T>*>		successors;
 
 	static SetUF<T>* makeSet(T item);
 	static SetUF<T>* unionByRank(SetUF<T>* first, SetUF<T>* second);
@@ -54,9 +52,7 @@ SetUF<T>* SetUF<T>::unionByRank(SetUF<T>* first, SetUF<T>* second)
 		repre_second = tmp;
 	}
 
-	//repre_first->successors.insert(repre_second);
 	repre_second->parent = repre_first;
-	
 	if (repre_first->rank == repre_second->rank)
 	{
 		repre_first->rank += 1;
@@ -74,7 +70,6 @@ inline SetUF<T>* SetUF<T>::unionInOrder(SetUF<T>* first, SetUF<T>* second)
 		return first;
 	}
 
-	//first->successors.insert(second);
 	second->parent = first;
 	first->size += second->size;
 	return first;
@@ -89,14 +84,12 @@ SetUF<T>* SetUF<T>::find(SetUF<T>* set)
 	while (current->parent != current)
 	{
 		to_rewire.push_back(current);
-		//current->parent->successors.erase(current);
 		current = current->parent;
 	}
 
 	for (SetUF<T>* s : to_rewire)
 	{
 		s->parent = current;
-		//current->successors.insert(s);
 	}
 
 	return current;

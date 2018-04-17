@@ -18,7 +18,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	SetUF<PixelDataCarrier>* parent_sets = new SetUF<PixelDataCarrier>[image.rows * image.cols];
 	SetUF<PixelDataCarrier>* zpar_sets = new SetUF<PixelDataCarrier>[image.rows * image.cols];
 	for (PixelDataCarrier* p : pixels) {
-		int idx = index(p->data);
+		int idx = index(p->point);
 		parent_sets[idx].item = *p;
 		zpar_sets[idx].item = *p;
 	}
@@ -28,7 +28,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	for (int i = pixels_sorted.size()-1; i >= 0; i--) 
 	{
 		PixelDataCarrier* pdc = pixels_sorted[i];	
-		int idx = index(pdc->data);
+		int idx = index(pdc->point);
 		
 		SetUF<PixelDataCarrier>* s1 = &parent_sets[idx];
 		SetUF<PixelDataCarrier>* s2 = &zpar_sets[idx];
@@ -37,7 +37,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 		repr[idx] = s1;												
 		zpar[idx] = s2;
 
-		neighbours(pdc->data, zpar, neighb);	
+		neighbours(pdc->point, zpar, neighb);	
 		for (int i = 0; i < 8; i++)
 		{
 			SetUF<PixelDataCarrier>* n = neighb[i];
@@ -45,23 +45,21 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 
 			SetUF<PixelDataCarrier>* n_rep = set_uf->find(n);			// get representant of zpar component
 			if (s2->parent == n_rep) continue;
-			set_uf->unionInOrder(s1, repr[index(n_rep->item.data)]);	// hang component under s1, to create hierarchy
+			set_uf->unionInOrder(s1, repr[index(n_rep->item.point)]);	// hang component under s1, to create hierarchy
 			
 			SetUF<PixelDataCarrier>* head = set_uf->unionByRank(s2, n_rep);	// union by rank in zpar
-			repr[index(head->item.data)] = s1;							
+			repr[index(head->item.point)] = s1;							
 		}
 	}
-
-	tree = S;
+	this->S = S;
 	dealocate = parent_sets;
+	canonicalize();
+
+	//freeing buffers
 	delete[] zpar;
 	delete[] repr;
 	delete[] zpar_sets;
-	//delete[] parent;
-	for (auto a : pixels) 
-	{
-		delete a;
-	}
+	for (auto a : pixels) { delete a; }
 }
 
 void MaxTreeBerger::reconstruct()
@@ -69,10 +67,23 @@ void MaxTreeBerger::reconstruct()
 
 }
 
+void MaxTreeBerger::canonicalize()
+{
+	for (int i = 0; i < image.cols * image.rows; i++)
+	{
+		SetUF<PixelDataCarrier>* p = S[i];
+		SetUF<PixelDataCarrier>* q = p->parent;
+		if (q->item.value == q->parent->item.value)
+		{
+			p->parent = q->parent;
+		}
+	}
+}
+
 void MaxTreeBerger::reconstructRec(SetUF<PixelDataCarrier>* root)
 {
 	/*
-	reconstructed.at<uchar>(root->item.data) = root->item.sort_value;
+	reconstructed.at<uchar>(root->item.point) = root->item.sort_value;
 	for (SetUF<PixelDataCarrier>* ch : root->successors) 
 	{
 		reconstructRec(ch);
@@ -133,6 +144,6 @@ void MaxTreeBerger::neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, 
 
 MaxTreeBerger::~MaxTreeBerger()
 {
-	delete[] tree;
+	delete[] S;
 	delete[] dealocate;
 }

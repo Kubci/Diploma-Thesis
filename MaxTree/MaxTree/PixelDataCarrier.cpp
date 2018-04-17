@@ -1,11 +1,11 @@
 #include "PixelDataCarrier.h"
 
 
-PixelDataCarrier::PixelDataCarrier(int sort_value, cv::Point data) : sort_value(sort_value), data(data)
+PixelDataCarrier::PixelDataCarrier(int value, cv::Point data) : value(value), point(data)
 {
 }
 
-PixelDataCarrier::PixelDataCarrier(int sort_value) : sort_value(sort_value)
+PixelDataCarrier::PixelDataCarrier(int value) : value(value)
 {
 }
 
