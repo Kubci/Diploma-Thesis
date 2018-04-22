@@ -4,6 +4,7 @@
 #include <future>
 
 #include "Parameters.h"
+#include "PixelDataCarrier.h"
 
 template <typename T>
 class SetUF
@@ -31,6 +32,8 @@ public:
 private:
 	static void deleteRec(SetUF<T>* node);
 };
+
+typedef SetUF<PixelDataCarrier> SetUFPix;
 
 template <typename T>
 SetUF<T>* SetUF<T>::makeSet(T item)

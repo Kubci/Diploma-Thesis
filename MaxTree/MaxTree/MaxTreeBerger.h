@@ -3,6 +3,7 @@
 #include "SetUF.h"
 #include "PixelDataCarrier.h"
 #include "RadixSort.h"
+#include "GTParams.h"
 
 class MaxTreeBerger
 {
@@ -14,12 +15,17 @@ public:
 
 	MaxTreeBerger(cv::Mat& image);
 	void reconstruct();
+	void computeArea();
 	void areaOpening(int area);
+	void computeBoundingBoxes();
+	void extractCanonicalLevels(std::string path);
+	void compareToGT(GTParams& gt);
+	void exportBestRois(GTParams& gt, std::string path);
 	~MaxTreeBerger();
 
 private:
 	SetUF<PixelDataCarrier>* dealocate;
-	void computeArea();
+	void extractRoi(cv::Mat& roi, SetUFPix* c_node);
 	void canonicalize();
 	void retrievePixelsAsVector(std::vector<PixelDataCarrier*> &pixels);
 	int index(cv::Point p) const;
