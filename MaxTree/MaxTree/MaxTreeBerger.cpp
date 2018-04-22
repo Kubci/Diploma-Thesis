@@ -31,7 +31,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	}
 
 	SetUF<PixelDataCarrier>* neighb[9];
-	for (int i = pixels_sorted.size()-1; i >= 0; i--) 
+	for (int i = (int) pixels_sorted.size()-1; i >= 0; i--) 
 	{
 		PixelDataCarrier* pdc = pixels_sorted[i];	
 		int idx = index(pdc->point);
@@ -97,7 +97,7 @@ void MaxTreeBerger::retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixe
 	}
 }
 
-int MaxTreeBerger::index(cv::Point p) const
+int MaxTreeBerger::index(cv::Point& p) const
 {
 	return index(p.x, p.y);
 }
@@ -111,7 +111,7 @@ int MaxTreeBerger::index(int x, int y) const
 // 0 1 2
 // 7   3
 // 6 5 4
-void MaxTreeBerger::neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, SetUF<PixelDataCarrier>* (&neighbours)[9]) const
+void MaxTreeBerger::neighbours(cv::Point& p, SetUF<PixelDataCarrier>** ef_mTree, SetUF<PixelDataCarrier>* (&neighbours)[9]) const
 {
 	int i0 = index(p.x - 1, p.y - 1);
 	int i1 = index(p.x    , p.y - 1);
@@ -190,13 +190,12 @@ void MaxTreeBerger::extractRoi(cv::Mat& roi, SetUFPix* p)
 	cv::threshold(roi, roi, 254, 255, CV_THRESH_BINARY);
 }
 
-void MaxTreeBerger::extractCanonicalLevels(std::string path)
+void MaxTreeBerger::extractCanonicalLevels(std::string& path)
 {
 	computeArea();
 	computeBoundingBoxes();
 
 	cv::Mat roi;
-	int x, y, w, h;
 	for (int i = 0; i < image.cols * image.rows; i++)
 	{
 		SetUF<PixelDataCarrier>* p = S[i];
@@ -231,13 +230,13 @@ void MaxTreeBerger::compareToGT(GTParams& gt)
 			if (jaccard > best_jacc) 
 			{
 				gt.best_cct.at<float>(label, 0) = jaccard;
-				gt.best_cct.at<float>(label, 1) = i;
+				gt.best_cct.at<float>(label, 1) = static_cast<float>(i);
 			}
 		}
 	}
 }
 
-void MaxTreeBerger::exportBestRois(GTParams & gt, std::string path)
+void MaxTreeBerger::exportBestRois(GTParams & gt, std::string& path, std::string& name)
 {
 	cv::Mat roi;
 	cv::Mat overlay(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
@@ -252,11 +251,11 @@ void MaxTreeBerger::exportBestRois(GTParams & gt, std::string path)
 		addRoiToImage(overlay, roi, p);
 
 		float jaccard = gt.best_cct.at<float>(i, 0);
-		std::string out = path + std::to_string(jaccard) + "label_" + std::to_string(i) + ".png";
+		std::string out = path + name + "_" + std::to_string(jaccard) + "label_" + std::to_string(i) + ".png";
 		cv::imwrite(out, roi);
 	}
-	cv::imwrite(path + "labels.png", gt.labels);
-	cv::imwrite(path + "components.png", overlay);
+	cv::imwrite(path + name + "_labels.png", gt.labels);
+	cv::imwrite(path + name + "_components.png", overlay);
 }
 
 void MaxTreeBerger::areaOpening(int area)

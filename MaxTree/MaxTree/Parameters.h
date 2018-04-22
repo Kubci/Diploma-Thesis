@@ -11,7 +11,7 @@ public:
 	int max_x = -1;
 	int max_y = -1;
 
-	void initBB(cv::Point point);
+	void initBB(cv::Point& point);
 	void setBB(Parameters & p);
 	
 

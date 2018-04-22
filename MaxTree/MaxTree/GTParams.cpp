@@ -11,15 +11,15 @@ GTParams::~GTParams()
 {
 }
 
-int GTParams::getClosestLabel(cv::Point2f cct_centroid)
+int GTParams::getClosestLabel(cv::Point2f& cct_centroid)
 {
 	float min_dst = 9999999;
 	int label = -1;
 	for (int i = 1; i < stats.rows; i++)
 	{
 		double* row = (double*)centroids.ptr(i);
-		float l_x = row[0];
-		float l_y = row[1];
+		float l_x = static_cast<float>(row[0]);
+		float l_y = static_cast<float>(row[1]);
 
 		float dst = distance(cct_centroid, cv::Point2f(l_x, l_y));
 		if (dst < min_dst)
@@ -32,7 +32,7 @@ int GTParams::getClosestLabel(cv::Point2f cct_centroid)
 	return label;
 }
 
-float GTParams::computeJaccard(cv::Mat roi, SetUFPix * cct, int label)
+float GTParams::computeJaccard(cv::Mat& roi, SetUFPix * cct, int label)
 {
 	//computing the window
 	int x0 = std::min(cct->params.min_x, stats.at<int>(cv::Point(0, label)));

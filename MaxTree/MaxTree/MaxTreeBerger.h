@@ -18,9 +18,9 @@ public:
 	void computeArea();
 	void areaOpening(int area);
 	void computeBoundingBoxes();
-	void extractCanonicalLevels(std::string path);
+	void extractCanonicalLevels(std::string& path);
 	void compareToGT(GTParams& gt);
-	void exportBestRois(GTParams& gt, std::string path);
+	void exportBestRois(GTParams& gt, std::string& path, std::string& name);
 	~MaxTreeBerger();
 
 private:
@@ -28,9 +28,9 @@ private:
 	void extractRoi(cv::Mat& roi, SetUFPix* c_node);
 	void canonicalize();
 	void retrievePixelsAsVector(std::vector<PixelDataCarrier*> &pixels);
-	int index(cv::Point p) const;
+	int index(cv::Point& p) const;
 	int index(int x, int y) const;
-	void neighbours(cv::Point p, SetUF<PixelDataCarrier>** ef_mTree, SetUF<PixelDataCarrier>* (&neighbours)[9]) const;
+	void neighbours(cv::Point& p, SetUF<PixelDataCarrier>** ef_mTree, SetUF<PixelDataCarrier>* (&neighbours)[9]) const;
 
 };
 

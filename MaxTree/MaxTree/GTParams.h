@@ -13,13 +13,13 @@ public:
 	cv::Mat best_cct;
 
 	int max_area = -1;
-	int min_area = 9999999999;
+	int min_area = INT_MAX;
 
 	GTParams(cv::Mat gt);
 	~GTParams();
 
-	int getClosestLabel(cv::Point2f cct_centroid);
-	float computeJaccard(cv::Mat roi, SetUFPix* cct, int label);
+	int getClosestLabel(cv::Point2f& cct_centroid);
+	float computeJaccard(cv::Mat& roi, SetUFPix* cct, int label);
 private:
 	void getMinMaxArea();
 };

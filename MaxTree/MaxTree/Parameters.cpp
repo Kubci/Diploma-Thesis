@@ -1,6 +1,6 @@
 #include "Parameters.h"
 
-void Parameters::initBB(cv::Point point)
+void Parameters::initBB(cv::Point& point)
 {
 	min_x = point.x;
 	max_x = point.x;
