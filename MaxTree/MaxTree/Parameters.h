@@ -11,6 +11,9 @@ public:
 	int max_x = -1;
 	int max_y = -1;
 
+	float jaccard = 0;
+	float jaccardDP = 0;
+
 	void initBB(cv::Point& point);
 	void setBB(Parameters & p);
 	

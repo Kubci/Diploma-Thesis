@@ -69,6 +69,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 
 void MaxTreeBerger::canonicalize()
 {
+	int counter = 1;
 	for (int i = 0; i < image.cols * image.rows; i++)
 	{
 		SetUF<PixelDataCarrier>* p = S[i];
@@ -80,9 +81,33 @@ void MaxTreeBerger::canonicalize()
 		if (p->item.value != q->item.value) 
 		{
 			p->isCanonical = true;
+			p->canIndex = counter;
+			counter++;
 		}
 	}
 	S[0]->isCanonical = true; //root is always cannonical
+	S[0]->canIndex = 0;
+	can_count = counter;
+
+	canonicalLeafs();
+}
+
+void MaxTreeBerger::canonicalLeafs() const
+{
+	for (int i = image.cols * image.rows - 1; i > 0; i--)
+	{
+		SetUF<PixelDataCarrier>* p = S[i];
+		SetUF<PixelDataCarrier>* q = p->parent;
+		if (!p->isCanonical)
+		{
+			p->isCanLeaf = false;
+		}
+		else // if p is cannonical
+		{
+			// then q is not cannonical
+			q->isCanLeaf = false;
+		}
+	}
 }
 
 void MaxTreeBerger::retrievePixelsAsVector(std::vector<PixelDataCarrier*> & pixels)
@@ -234,6 +259,65 @@ void MaxTreeBerger::compareToGT(GTParams& gt)
 			}
 		}
 	}
+}
+
+void MaxTreeBerger::findBestJaccard(GTParams& gt)
+{
+	computeBoundingBoxes();
+	gt.initLabelCounter(can_count);
+
+	for (int i = image.cols * image.rows - 1; i >= 0; i--)
+	{
+		SetUF<PixelDataCarrier>* p = S[i];
+		if(p->parent->item.point.x == 168 && p->parent->item.point.y == 22)
+		{
+			int brejkpoint = 0;
+		}
+		gt.addPixToLC(p);
+		if (p->isCanonical)
+		{
+			p->params.jaccard = gt.computeJaccardLC(p);
+			p->params.jaccardDP = gt.computeJaccardLCDP(p);
+			if (p->params.jaccard >= p->params.jaccardDP)
+			{
+				p->useThis = true;
+				gt.pushJaccardToParentDP(p, true);
+			}
+			else
+			{
+				gt.pushJaccardToParentDP(p, false);
+			}
+		}
+
+	}
+	
+	cv::Mat roi;
+	cv::Mat result(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
+	for (int i = 1; i < image.cols * image.rows; i++)
+	{
+		SetUF<PixelDataCarrier>* p = S[i];
+		if (p->isCanonical)
+		{
+			SetUF<PixelDataCarrier>* q = p->parent;
+			//already represented branch
+			if(q->useThis)
+			{
+				p->useThis = true;
+			}
+			else
+			{
+				if (p->useThis)
+				{
+					if (p->params.jaccard > 0.01) {
+						extractRoi(roi, p);
+						addRoiToImage(result, roi, p);
+						cv::imwrite(std::to_string(i) + "_" + std::to_string(p->params.jaccard) + ".png", roi);
+					}
+				}
+			}
+		}
+	}
+	cv::imwrite("result.png", result);
 }
 
 void MaxTreeBerger::exportBestRois(GTParams & gt, std::string& path, std::string& name)

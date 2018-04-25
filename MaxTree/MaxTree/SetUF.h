@@ -18,6 +18,11 @@ public:
 	Parameters							params;
 	bool								isActive = true;
 	bool								isCanonical = false;
+	bool								isCanLeaf = true;
+	int									canIndex = -1;
+
+	bool useThis = false;
+	
 
 	static SetUF<T>* makeSet(T item);
 	static SetUF<T>* unionByRank(SetUF<T>* first, SetUF<T>* second);
