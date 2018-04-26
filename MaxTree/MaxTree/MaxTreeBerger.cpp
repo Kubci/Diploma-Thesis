@@ -261,7 +261,7 @@ void MaxTreeBerger::compareToGT(GTParams& gt)
 	}
 }
 
-void MaxTreeBerger::findBestJaccard(GTParams& gt)
+cv::Mat MaxTreeBerger::findBestJaccard(GTParams& gt, std::string& path, std::string& name)
 {
 	computeBoundingBoxes();
 	gt.initLabelCounter(can_count);
@@ -311,16 +311,44 @@ void MaxTreeBerger::findBestJaccard(GTParams& gt)
 					if (p->params.jaccard > 0.01) {
 						extractRoi(roi, p);
 						addRoiToImage(result, roi, p);
-						cv::imwrite(std::to_string(i) + "_" + std::to_string(p->params.jaccard) + ".png", roi);
+						//cv::imwrite(std::to_string(i) + "_" + std::to_string(p->params.jaccard) + ".png", roi);
 					}
 				}
 			}
 		}
 	}
-	cv::imwrite("result.png", result);
+	cv::imwrite(path + name + "_maxJaccard.png", result);
+	return result;
 }
 
-void MaxTreeBerger::exportBestRois(GTParams & gt, std::string& path, std::string& name)
+void MaxTreeBerger::findBestSingleJaccard(GTParams& gt, std::string& path, std::string& name)
+{
+
+	computeBoundingBoxes();
+	gt.initLabelCounter(can_count);
+
+	for (int i = image.cols * image.rows - 1; i >= 0; i--)
+	{
+		SetUF<PixelDataCarrier>* p = S[i];
+		gt.addPixToLC(p);
+		if (p->isCanonical)
+		{
+			p->params.jaccard = gt.computeJaccardLC(p);
+			int label = 0;
+			if(gt.intersestOneGTCompLC(p, &label))
+			{
+				float jaccard = gt.best_cct.at<float>(label, 0);
+				if(p->params.jaccard >= jaccard)
+				{
+					gt.best_cct.at<float>(label, 0) = jaccard;
+					gt.best_cct.at<float>(label, 1) = i;
+				}
+			}
+		}
+	}
+}
+
+cv::Mat MaxTreeBerger::exportBestRois(GTParams & gt, std::string& path, std::string& name)
 {
 	cv::Mat roi;
 	cv::Mat overlay(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
@@ -335,11 +363,13 @@ void MaxTreeBerger::exportBestRois(GTParams & gt, std::string& path, std::string
 		addRoiToImage(overlay, roi, p);
 
 		float jaccard = gt.best_cct.at<float>(i, 0);
-		std::string out = path + name + "_" + std::to_string(jaccard) + "label_" + std::to_string(i) + ".png";
-		cv::imwrite(out, roi);
+		//std::string out = path + name + "_" + std::to_string(jaccard) + "label_" + std::to_string(i) + ".png";
+		//cv::imwrite(out, roi);
 	}
 	cv::imwrite(path + name + "_labels.png", gt.labels);
 	cv::imwrite(path + name + "_components.png", overlay);
+
+	return overlay;
 }
 
 void MaxTreeBerger::areaOpening(int area)

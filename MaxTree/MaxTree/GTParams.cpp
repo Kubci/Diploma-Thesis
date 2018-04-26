@@ -150,6 +150,30 @@ float GTParams::computeJaccardLC(SetUF<PixelDataCarrier>* p) const
 	return static_cast<float>(_inter) / static_cast<float>(_union);
 }
 
+bool GTParams::intersestOneGTCompLC(SetUF<PixelDataCarrier>* p, int* label) const
+{
+	int c_idx = LCIdx(p->canIndex);
+	bool det = false;
+
+	for (int i = 1; i < labelsCount; i++)
+	{
+		int val = labelCounter[c_idx + i];
+		if (val)
+		{
+			if (!det)
+			{
+				det = true;
+				*label = i;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+	return  det;
+}
+
 float GTParams::computeJaccardLCDP(SetUF<PixelDataCarrier>* p) const
 {
 	int c_idx = LCIdx(p->canIndex);

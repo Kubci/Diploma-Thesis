@@ -22,8 +22,9 @@ public:
 	void computeBoundingBoxes();
 	void extractCanonicalLevels(std::string& path);
 	void compareToGT(GTParams& gt);
-	void findBestJaccard(GTParams& gt);
-	void exportBestRois(GTParams& gt, std::string& path, std::string& name);
+	cv::Mat findBestJaccard(GTParams& gt, std::string& path, std::string& name);
+	void findBestSingleJaccard(GTParams& gt, std::string& path, std::string& name);
+	cv::Mat exportBestRois(GTParams& gt, std::string& path, std::string& name);
 	~MaxTreeBerger();
 
 private:

@@ -53,10 +53,13 @@ void evalueteInFolder(std::string& path) {
 			if (image.cols == 0 || image.rows == 0) continue;
 
 			GTParams gtp(gt);
+			GTParams gtp2(gt);
 			MaxTreeBerger m_tree(image);
-			m_tree.compareToGT(gtp);
-			m_tree.exportBestRois(gtp, path2 + "\\res\\", name);
-
+			m_tree.findBestSingleJaccard(gtp, path2 + "\\res3\\", name);
+			cv::Mat r2 = m_tree.findBestJaccard(gtp2, path2 + "\\res2\\", name);
+			//m_tree.compareToGT(gtp);
+			cv::Mat r1 = m_tree.exportBestRois(gtp, path2 + "\\res3\\", name);
+			cv::imwrite(path2 + "\\res3\\" + name + "_overlay.png", r1 + r2);
 		}
 	}
 }

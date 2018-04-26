@@ -28,6 +28,7 @@ public:
 	void initLabelCounter(int can_count);
 	void addPixToLC(SetUF<PixelDataCarrier>* p);
 	float computeJaccardLC(SetUF<PixelDataCarrier>* p) const;
+	bool intersestOneGTCompLC(SetUF<PixelDataCarrier>* p, int* label) const;
 	float computeJaccardLCDP(SetUF<PixelDataCarrier>* p) const;
 	void pushJaccardToParentDP(SetUF<PixelDataCarrier>* p, bool flag);
 
