@@ -269,10 +269,6 @@ cv::Mat MaxTreeBerger::findBestJaccard(GTParams& gt, std::string& path, std::str
 	for (int i = image.cols * image.rows - 1; i >= 0; i--)
 	{
 		SetUF<PixelDataCarrier>* p = S[i];
-		if(p->parent->item.point.x == 168 && p->parent->item.point.y == 22)
-		{
-			int brejkpoint = 0;
-		}
 		gt.addPixToLC(p);
 		if (p->isCanonical)
 		{
@@ -299,7 +295,6 @@ cv::Mat MaxTreeBerger::findBestJaccard(GTParams& gt, std::string& path, std::str
 		if (p->isCanonical)
 		{
 			SetUF<PixelDataCarrier>* q = p->parent;
-			//already represented branch
 			if(q->useThis)
 			{
 				p->useThis = true;
@@ -323,7 +318,6 @@ cv::Mat MaxTreeBerger::findBestJaccard(GTParams& gt, std::string& path, std::str
 
 void MaxTreeBerger::findBestSingleJaccard(GTParams& gt, std::string& path, std::string& name)
 {
-
 	computeBoundingBoxes();
 	gt.initLabelCounter(can_count);
 
@@ -340,7 +334,7 @@ void MaxTreeBerger::findBestSingleJaccard(GTParams& gt, std::string& path, std::
 				float jaccard = gt.best_cct.at<float>(label, 0);
 				if(p->params.jaccard >= jaccard)
 				{
-					gt.best_cct.at<float>(label, 0) = jaccard;
+					gt.best_cct.at<float>(label, 0) = p->params.jaccard;
 					gt.best_cct.at<float>(label, 1) = i;
 				}
 			}
@@ -361,10 +355,6 @@ cv::Mat MaxTreeBerger::exportBestRois(GTParams & gt, std::string& path, std::str
 		extractRoi(roi, p);
 
 		addRoiToImage(overlay, roi, p);
-
-		float jaccard = gt.best_cct.at<float>(i, 0);
-		//std::string out = path + name + "_" + std::to_string(jaccard) + "label_" + std::to_string(i) + ".png";
-		//cv::imwrite(out, roi);
 	}
 	cv::imwrite(path + name + "_labels.png", gt.labels);
 	cv::imwrite(path + name + "_components.png", overlay);

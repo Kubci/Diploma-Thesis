@@ -55,11 +55,12 @@ void evalueteInFolder(std::string& path) {
 			GTParams gtp(gt);
 			GTParams gtp2(gt);
 			MaxTreeBerger m_tree(image);
+			MaxTreeBerger m_tree2(image);
 			m_tree.findBestSingleJaccard(gtp, path2 + "\\res3\\", name);
-			cv::Mat r2 = m_tree.findBestJaccard(gtp2, path2 + "\\res2\\", name);
-			//m_tree.compareToGT(gtp);
-			cv::Mat r1 = m_tree.exportBestRois(gtp, path2 + "\\res3\\", name);
-			cv::imwrite(path2 + "\\res3\\" + name + "_overlay.png", r1 + r2);
+			cv::Mat r2 = m_tree2.findBestJaccard(gtp2, path2 + "\\res2\\", name);
+			cv::Mat r1 = m_tree2.exportBestRois(gtp, path2 + "\\res3\\", name);
+			r1 = r1 + r2;
+			cv::imwrite(path2 + "\\res3\\" + name + "_overlay.png", r1);
 		}
 	}
 }
