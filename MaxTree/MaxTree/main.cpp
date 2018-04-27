@@ -3,8 +3,8 @@
 #include "MaxTreeNaive.h"
 #include "MaxTreeBerger.h"
 #include "RadixSort.h"
-#include "GTParams.h"
-#include "GTEvaluation.h"
+#include "ParamsGT.h"
+#include "BatchEvaluator.h"
 
 int main(int, char)
 {
@@ -18,12 +18,12 @@ int main(int, char)
 	convertTo8BitImage(gt);
 	convertTo8BitImage(image);
 
-	GTParams gtp(gt);
-	GTParams gtp2(gt);
+	ParamsGT gtp(gt);
+	ParamsGT gtp2(gt);
 
 	MaxTreeBerger m_tree(image);
 	MaxTreeBerger m_tree2(image);
-	cv::Mat global_jaccard = m_tree.findBestJaccard(gtp, path, std::string("qpi11") );
+	cv::Mat global_jaccard = m_tree.findBestGlobalJaccard(gtp, path, std::string("qpi11") );
 	m_tree2.findBestSingleJaccard(gtp, path, std::string("qpi11") );
 	cv::Mat single_jaccard = m_tree2.exportBestRois(gtp, path, std::string("qpi11") );
 	clock_t end = std::clock();

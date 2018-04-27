@@ -1,6 +1,11 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "ParamsGT.h"
+#include "MaxTreeBerger.h"
+#include "TreeEvalToGT.h"
+#include "Utils.h"
+#include "opencv2\opencv.hpp"
 #include "dirent.h"
 
 void contentsOFFolder(std::vector<std::string>& names, std::string& path) {
@@ -16,6 +21,25 @@ void contentsOFFolder(std::vector<std::string>& names, std::string& path) {
 		}
 		closedir(dir);
 	}
+}
+
+cv::Mat rutine(std::string& gt_path, std::string& image_path, std::string& name, std::string& path2) {
+
+	cv::Mat r1;
+	cv::Mat gt = cv::imread(gt_path, CV_LOAD_IMAGE_ANYDEPTH);
+	cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_ANYDEPTH);
+	convertTo8BitImage(gt);
+	convertTo8BitImage(image);
+	if (image.cols == 0 || image.rows == 0) return r1;
+
+	ParamsGT gtp(gt);
+	MaxTreeBerger m_tree(image);
+
+	findBestSingleJaccard(m_tree, gtp, path2 + "\\res3\\", name);
+	cv::Mat r2 = findBestGlobalJaccard(m_tree, gtp, path2 + "\\res2\\", name);
+	r1 = exportBestRois(m_tree, gtp, path2 + "\\res3\\", name);
+	r1 = r1 + r2;
+	return r1;
 }
 
 void evalueteInFolder(std::string& path) {
@@ -44,22 +68,11 @@ void evalueteInFolder(std::string& path) {
 
 			std::cout << name << std::endl;
 
-			std::string string_path = path2 + "GT\\" + name + "_gt.tif";
+			std::string gt_path = path2 + "GT\\" + name + "_gt.tif";
 			std::string image_path = path2 + name + ".tif";
-			cv::Mat gt = cv::imread(string_path, CV_LOAD_IMAGE_ANYDEPTH);
-			cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_ANYDEPTH);
-			convertTo8BitImage(gt);
-			convertTo8BitImage(image);
-			if (image.cols == 0 || image.rows == 0) continue;
 
-			GTParams gtp(gt);
-			GTParams gtp2(gt);
-			MaxTreeBerger m_tree(image);
-			MaxTreeBerger m_tree2(image);
-			m_tree.findBestSingleJaccard(gtp, path2 + "\\res3\\", name);
-			cv::Mat r2 = m_tree2.findBestJaccard(gtp2, path2 + "\\res2\\", name);
-			cv::Mat r1 = m_tree2.exportBestRois(gtp, path2 + "\\res3\\", name);
-			r1 = r1 + r2;
+			cv::Mat r1 = rutine(gt_path, image_path, name, path2);
+			
 			cv::imwrite(path2 + "\\res3\\" + name + "_overlay.png", r1);
 		}
 	}

@@ -16,7 +16,6 @@ public:
 
 	void initBB(cv::Point& point);
 	void setBB(Parameters & p);
-	
 
 	Parameters();
 	~Parameters();

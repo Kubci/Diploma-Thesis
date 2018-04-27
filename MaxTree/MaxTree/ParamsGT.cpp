@@ -1,19 +1,25 @@
-#include "GTParams.h"
+#include "ParamsGT.h"
 
-GTParams::GTParams(cv::Mat gt)
+ParamsGT::ParamsGT(cv::Mat gt)
 {
 	labelsCount = cv::connectedComponentsWithStats(gt, labels, stats, centroids, 4);
 	best_cct = cv::Mat(centroids.rows, centroids.cols, CV_32FC1, cv::Scalar(-1));
 	getMinMaxArea();
 }
 
-GTParams::~GTParams()
+ParamsGT::~ParamsGT()
+{
+	//delete[] labelCounter;
+	//delete[] labelCounterDP;
+}
+
+void ParamsGT::freeLabelCounter()
 {
 	delete[] labelCounter;
 	delete[] labelCounterDP;
 }
 
-int GTParams::getClosestLabel(cv::Point2f& cct_centroid)
+int ParamsGT::getClosestLabel(cv::Point2f& cct_centroid)
 {
 	float min_dst = 9999999;
 	int label = -1;
@@ -34,7 +40,7 @@ int GTParams::getClosestLabel(cv::Point2f& cct_centroid)
 	return label;
 }
 
-float GTParams::computeJaccard(cv::Mat& roi, SetUFPix * cct, int label)
+float ParamsGT::computeJaccard(cv::Mat& roi, SetUFPix * cct, int label)
 {
 	//computing the window
 	int x0 = std::min(cct->params.min_x, stats.at<int>(cv::Point(0, label)));
@@ -89,7 +95,7 @@ float GTParams::computeJaccard(cv::Mat& roi, SetUFPix * cct, int label)
 	return _intersection / _union;
 }
 
-void GTParams::initLabelCounter(int can_count)
+void ParamsGT::initLabelCounter(int can_count)
 {
 	isCounterAllocated = true;
 	labelCounter = new int[can_count * labelsCount]{ 0 };
@@ -99,12 +105,12 @@ void GTParams::initLabelCounter(int can_count)
 	std::fill_n(labelCounterDP, can_count * labelsCount, 0);
 }
 
-int GTParams::LCIdx(int can_idx) const
+int ParamsGT::LCIdx(int can_idx) const
 {
 	return can_idx * labelsCount;
 }
 
-void GTParams::addPixToLC(SetUF<PixelDataCarrier>* p)
+void ParamsGT::addPixToLC(SetUFPix* p)
 {
 	int c_idx;
 	if (p->isCanonical)
@@ -128,7 +134,7 @@ void GTParams::addPixToLC(SetUF<PixelDataCarrier>* p)
 	}
 }
 
-float GTParams::computeJaccardLC(SetUF<PixelDataCarrier>* p) const
+float ParamsGT::computeJaccardLC(SetUFPix* p) const
 {
 	int c_idx = LCIdx(p->canIndex);
 
@@ -150,7 +156,7 @@ float GTParams::computeJaccardLC(SetUF<PixelDataCarrier>* p) const
 	return static_cast<float>(_inter) / static_cast<float>(_union);
 }
 
-bool GTParams::intersestOneGTCompLC(SetUF<PixelDataCarrier>* p, int* label) const
+bool ParamsGT::intersestOneGTCompLC(SetUFPix* p, int* label) const
 {
 	int c_idx = LCIdx(p->canIndex);
 	bool det = false;
@@ -174,7 +180,7 @@ bool GTParams::intersestOneGTCompLC(SetUF<PixelDataCarrier>* p, int* label) cons
 	return  det;
 }
 
-float GTParams::computeJaccardLCDP(SetUF<PixelDataCarrier>* p) const
+float ParamsGT::computeJaccardLCDP(SetUFPix* p) const
 {
 	int c_idx = LCIdx(p->canIndex);
 
@@ -196,7 +202,7 @@ float GTParams::computeJaccardLCDP(SetUF<PixelDataCarrier>* p) const
 	return static_cast<float>(_inter) / static_cast<float>(_union);
 }
 
-void GTParams::pushJaccardToParentDP(SetUF<PixelDataCarrier>* p, bool flag)
+void ParamsGT::pushJaccardToParentDP(SetUFPix* p, bool flag)
 {
 	int c_idx = LCIdx(p->canIndex);
 	int idx2 = LCIdx(p->parent->canIndex);
@@ -212,7 +218,7 @@ void GTParams::pushJaccardToParentDP(SetUF<PixelDataCarrier>* p, bool flag)
 	}
 }
 
-void GTParams::getMinMaxArea()
+void ParamsGT::getMinMaxArea()
 {
 	for (int i = 1; i < stats.rows; i++)
 	{

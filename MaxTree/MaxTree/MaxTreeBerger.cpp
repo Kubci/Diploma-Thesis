@@ -2,6 +2,7 @@
 
 MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(image.clone())
 {
+	pix_count = image.cols * image.rows;
 	SetUF<PixelDataCarrier>* set_uf;
 	SetUF<PixelDataCarrier>** S		= new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // pointers to pixel sets in sorted order refers to S in paper
 	SetUF<PixelDataCarrier>** repr	= new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // pointer from root of component in zpar to root of the same component in tree hierarchy;
@@ -59,7 +60,10 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	}
 	this->S = S;
 	dealocate = parent_sets;
+	
 	canonicalize();
+	computeArea();
+	computeBoundingBoxes();
 
 	//freeing buffers
 	delete[] zpar;
@@ -102,9 +106,8 @@ void MaxTreeBerger::canonicalLeafs() const
 		{
 			p->isCanLeaf = false;
 		}
-		else // if p is cannonical
+		else
 		{
-			// then q is not cannonical
 			q->isCanLeaf = false;
 		}
 	}
@@ -217,11 +220,8 @@ void MaxTreeBerger::extractRoi(cv::Mat& roi, SetUFPix* p)
 
 void MaxTreeBerger::extractCanonicalLevels(std::string& path)
 {
-	computeArea();
-	computeBoundingBoxes();
-
 	cv::Mat roi;
-	for (int i = 0; i < image.cols * image.rows; i++)
+	for (int i = 0; i < pix_count; i++)
 	{
 		SetUF<PixelDataCarrier>* p = S[i];
 		if (p->isCanonical) {
@@ -229,137 +229,6 @@ void MaxTreeBerger::extractCanonicalLevels(std::string& path)
 			cv::imwrite(path + std::to_string(i) + ".png", roi);
 		}
 	}
-}
-
-void MaxTreeBerger::compareToGT(GTParams& gt)
-{
-	computeArea();
-	computeBoundingBoxes();
-
-	cv::Mat roi;
-	cv::Point2f cct_centroid;
-	for (int i = 0; i < image.cols * image.rows; i++)
-	{
-		SetUF<PixelDataCarrier>* p = S[i];
-		if (p->isCanonical)
-		{
-			if (p->size < 0.8*gt.min_area || p->size > 1.2*gt.max_area) continue;
-
-			extractRoi(roi, p);
-			centroid(roi, p, cct_centroid);
-
-			int label = gt.getClosestLabel(cct_centroid);
-			float jaccard = gt.computeJaccard(roi, p, label);
-			float best_jacc = gt.best_cct.at<float>(label, 0);
-
-			if (jaccard > best_jacc) 
-			{
-				gt.best_cct.at<float>(label, 0) = jaccard;
-				gt.best_cct.at<float>(label, 1) = static_cast<float>(i);
-			}
-		}
-	}
-}
-
-cv::Mat MaxTreeBerger::findBestJaccard(GTParams& gt, std::string& path, std::string& name)
-{
-	computeBoundingBoxes();
-	gt.initLabelCounter(can_count);
-
-	for (int i = image.cols * image.rows - 1; i >= 0; i--)
-	{
-		SetUF<PixelDataCarrier>* p = S[i];
-		gt.addPixToLC(p);
-		if (p->isCanonical)
-		{
-			p->params.jaccard = gt.computeJaccardLC(p);
-			p->params.jaccardDP = gt.computeJaccardLCDP(p);
-			if (p->params.jaccard >= p->params.jaccardDP)
-			{
-				p->useThis = true;
-				gt.pushJaccardToParentDP(p, true);
-			}
-			else
-			{
-				gt.pushJaccardToParentDP(p, false);
-			}
-		}
-
-	}
-	
-	cv::Mat roi;
-	cv::Mat result(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
-	for (int i = 1; i < image.cols * image.rows; i++)
-	{
-		SetUF<PixelDataCarrier>* p = S[i];
-		if (p->isCanonical)
-		{
-			SetUF<PixelDataCarrier>* q = p->parent;
-			if(q->useThis)
-			{
-				p->useThis = true;
-			}
-			else
-			{
-				if (p->useThis)
-				{
-					if (p->params.jaccard > 0.01) {
-						extractRoi(roi, p);
-						addRoiToImage(result, roi, p);
-						//cv::imwrite(std::to_string(i) + "_" + std::to_string(p->params.jaccard) + ".png", roi);
-					}
-				}
-			}
-		}
-	}
-	cv::imwrite(path + name + "_maxJaccard.png", result);
-	return result;
-}
-
-void MaxTreeBerger::findBestSingleJaccard(GTParams& gt, std::string& path, std::string& name)
-{
-	computeBoundingBoxes();
-	gt.initLabelCounter(can_count);
-
-	for (int i = image.cols * image.rows - 1; i >= 0; i--)
-	{
-		SetUF<PixelDataCarrier>* p = S[i];
-		gt.addPixToLC(p);
-		if (p->isCanonical)
-		{
-			p->params.jaccard = gt.computeJaccardLC(p);
-			int label = 0;
-			if(gt.intersestOneGTCompLC(p, &label))
-			{
-				float jaccard = gt.best_cct.at<float>(label, 0);
-				if(p->params.jaccard >= jaccard)
-				{
-					gt.best_cct.at<float>(label, 0) = p->params.jaccard;
-					gt.best_cct.at<float>(label, 1) = i;
-				}
-			}
-		}
-	}
-}
-
-cv::Mat MaxTreeBerger::exportBestRois(GTParams & gt, std::string& path, std::string& name)
-{
-	cv::Mat roi;
-	cv::Mat overlay(image.rows, image.cols, CV_8UC1, cv::Scalar(0));
-	for (int i = 1; i < gt.best_cct.rows; i++)
-	{
-		float index = gt.best_cct.at<float>(i, 1);
-		if (index < 0) continue;
-
-		SetUF<PixelDataCarrier>* p = S[(int)index];
-		extractRoi(roi, p);
-
-		addRoiToImage(overlay, roi, p);
-	}
-	cv::imwrite(path + name + "_labels.png", gt.labels);
-	cv::imwrite(path + name + "_components.png", overlay);
-
-	return overlay;
 }
 
 void MaxTreeBerger::areaOpening(int area)

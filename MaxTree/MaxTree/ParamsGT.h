@@ -4,7 +4,7 @@
 #include "SetUF.h"
 #include <math.h>
 
-class GTParams
+class ParamsGT
 {
 public:
 	cv::Mat labels;
@@ -20,17 +20,19 @@ public:
 	int* labelCounter = nullptr;
 	int* labelCounterDP = nullptr;
 
-	GTParams(cv::Mat gt);
-	~GTParams();
+	ParamsGT(cv::Mat gt);
+	~ParamsGT();
+
+	void initLabelCounter(int can_count);
+	void freeLabelCounter();
 
 	int getClosestLabel(cv::Point2f& cct_centroid);
 	float computeJaccard(cv::Mat& roi, SetUFPix* cct, int label);
-	void initLabelCounter(int can_count);
-	void addPixToLC(SetUF<PixelDataCarrier>* p);
-	float computeJaccardLC(SetUF<PixelDataCarrier>* p) const;
-	bool intersestOneGTCompLC(SetUF<PixelDataCarrier>* p, int* label) const;
-	float computeJaccardLCDP(SetUF<PixelDataCarrier>* p) const;
-	void pushJaccardToParentDP(SetUF<PixelDataCarrier>* p, bool flag);
+	void addPixToLC(SetUFPix* p);
+	float computeJaccardLC(SetUFPix* p) const;
+	bool intersestOneGTCompLC(SetUFPix* p, int* label) const;
+	float computeJaccardLCDP(SetUFPix* p) const;
+	void pushJaccardToParentDP(SetUFPix* p, bool flag);
 
 private:
 	void getMinMaxArea();
