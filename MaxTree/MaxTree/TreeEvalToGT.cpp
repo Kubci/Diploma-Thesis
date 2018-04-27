@@ -27,10 +27,10 @@ void compareToGT(MaxTreeBerger& m_tree, ParamsGT& gt)
 	}
 }
 
-cv::Mat findBestGlobalJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& path, std::string& name)
+cv::Mat findBestGlobalJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& path, std::string& name, std::ofstream& file)
 {
 	gt.initLabelCounter(m_tree.can_count);
-	for (int i = m_tree.pix_count - 1; i >= 0; i--)
+	for (int i = m_tree.pix_count - 1; i >= 1; i--)
 	{
 		SetUF<PixelDataCarrier>* p = m_tree.S[i];
 		gt.addPixToLC(p);
@@ -49,6 +49,7 @@ cv::Mat findBestGlobalJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& 
 			}
 		}
 	}
+	file << "0;0;" << gt.computeJaccardLCDP(m_tree.S[0]) << std::endl;
 
 	cv::Mat roi;
 	cv::Mat result(m_tree.image.size(), CV_8UC1, cv::Scalar(0));
@@ -107,7 +108,7 @@ void findBestSingleJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& pat
 	gt.freeLabelCounter();
 }
 
-cv::Mat exportBestRois(MaxTreeBerger& m_tree, ParamsGT & gt, std::string& path, std::string& name)
+cv::Mat exportBestRois(MaxTreeBerger& m_tree, ParamsGT & gt, std::string& path, std::string& name, std::ofstream& file)
 {
 	cv::Mat roi;
 	cv::Mat overlay(m_tree.image.size(), CV_8UC1, cv::Scalar(0));
@@ -120,6 +121,9 @@ cv::Mat exportBestRois(MaxTreeBerger& m_tree, ParamsGT & gt, std::string& path, 
 		m_tree.extractRoi(roi, p);
 
 		addRoiToImage(overlay, roi, p);
+
+		float jaccard = gt.best_cct.at<float>(i, 0);
+		file << i << ";" << jaccard << ";" << std::endl;
 	}
 	cv::imwrite(path + name + "_labels.png", gt.labels);
 	cv::imwrite(path + name + "_components.png", overlay);
