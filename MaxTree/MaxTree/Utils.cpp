@@ -39,7 +39,7 @@ void convertTo8BitImage(cv::Mat & image)
 	double min, max;
 	cv::minMaxLoc(image, &min, &max);
 
-	image = 255 * ((image - min) / (max - min) );
+	image = 255 * ((image - min) / (max - min));
 	image.convertTo(image, CV_8UC1);
 }
 
@@ -47,7 +47,7 @@ float distance(cv::Point2f & first, cv::Point2f & second)
 {
 	float x = second.x - first.x;
 	float y = second.y - first.y;
-	
+
 	return std::abs(std::sqrt(x*x + y*y));
 }
 
@@ -92,5 +92,36 @@ void addRoiToImage(cv::Mat& image, cv::Mat& roi, SetUFPix * p)
 			}
 		}
 	}
+}
+
+cv::Mat blend(cv::Mat & image, cv::Mat overlay)
+{
+	cv::Mat output(image.size(), CV_8UC3, cv::Scalar(0));
+
+	for (int y = 0; y < image.rows; y++)
+	{
+		uchar* row_i = (uchar*)image.ptr(y);
+		uchar* row_o = (uchar*)overlay.ptr(y);
+		uchar* row_op = (uchar*)output.ptr(y);
+		for (int x = 0; x < image.cols; x++)
+		{
+			int idx = x * 3;
+			int val = row_o[x];
+			if (!row_o[x])
+			{
+				row_op[idx]		= row_i[x] * 255;
+				row_op[idx + 1] = row_i[x] * 255;
+				row_op[idx + 2] = row_i[x] * 255;
+			}
+			else
+			{ //chyba 
+				row_op[idx]		= row_i[x] * 128;
+				row_op[idx + 1] = row_i[x] * 128;
+				row_op[idx + 2] = std::min(255, (row_i[x] * 128) + (row_o[x] * 128));
+			}
+		}
+	}
+
+	return output;
 }
 

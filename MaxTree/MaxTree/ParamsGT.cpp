@@ -161,6 +161,8 @@ bool ParamsGT::intersestOneGTCompLC(SetUFPix* p, int* label) const
 	int c_idx = LCIdx(p->canIndex);
 	bool det = false;
 
+	//if (labelCounter[c_idx]) return false;
+
 	for (int i = 1; i < labelsCount; i++)
 	{
 		int val = labelCounter[c_idx + i];

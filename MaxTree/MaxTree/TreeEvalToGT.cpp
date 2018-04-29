@@ -78,7 +78,6 @@ cv::Mat findBestGlobalJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& 
 	}
 
 	gt.freeLabelCounter();
-	cv::imwrite(path + name + "_maxJaccard.png", result);
 	return result;
 }
 
@@ -125,8 +124,6 @@ cv::Mat exportBestRois(MaxTreeBerger& m_tree, ParamsGT & gt, std::string& path, 
 		float jaccard = gt.best_cct.at<float>(i, 0);
 		file << i << ";" << jaccard << ";" << std::endl;
 	}
-	cv::imwrite(path + name + "_labels.png", gt.labels);
-	cv::imwrite(path + name + "_components.png", overlay);
 
 	return overlay;
 }
