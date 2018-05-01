@@ -10,7 +10,7 @@ int main(int, char)
 {
 	clock_t begin = std::clock();
 	
-	std::string path = "D:\\_SKOLA\\_Master\\_Diplomka\\Data\\vyhodnotenie GT\\";
+	std::string path = "D:\\_SKOLA\\_Master\\_Diplomka\\Data\\vyhodnotenie GT zle\\";
 	evalueteInFolder(path);
 	/*
 	cv::Mat image = cv::imread(path + "QPI\\qpi11.tif", CV_LOAD_IMAGE_ANYDEPTH);
