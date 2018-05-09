@@ -1,6 +1,6 @@
 #include "MaxTreeBerger.h"
 
-MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(image.clone())
+MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image)
 {
 	pix_count = image.cols * image.rows;
 	SetUF<PixelDataCarrier>* set_uf;
@@ -68,6 +68,7 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image), reconstructed(imag
 	//freeing buffers
 	delete[] zpar;
 	delete[] zpar_sets;
+
 	for (auto a : pixels) { delete a; }
 }
 
@@ -78,6 +79,9 @@ void MaxTreeBerger::canonicalize()
 	{
 		SetUF<PixelDataCarrier>* p = S[i];
 		SetUF<PixelDataCarrier>* q = p->parent;
+		p->isActive = true;
+		p->isCanonical = false;
+		p->canIndex = -1;
 		if (q->item.value == q->parent->item.value)
 		{
 			p->parent = q->parent;
@@ -165,27 +169,16 @@ void MaxTreeBerger::neighbours(cv::Point& p, SetUF<PixelDataCarrier>** ef_mTree,
 
 void MaxTreeBerger::reconstruct()
 {
-	reconstructed.setTo(cv::Scalar(0));
 	if (!S[0]->isActive) return;
 
 	for (int i = 0; i < image.cols * image.rows; i++)
 	{
-		SetUF<PixelDataCarrier>* q = S[i]->parent;
 		SetUF<PixelDataCarrier>* p = S[i];
-
-		if (!q->isActive) 
-		{
-			p->isActive = false;
-		}
-		if (!p->isActive) 
-		{
-			p->item.rec_value = q->item.rec_value;
-		}
-		reconstructed.at<uchar>(p->item.point) = p->item.rec_value;
+		image.at<uchar>(p->item.point) = p->item.value;
 	}
 }
 
-void MaxTreeBerger::computeArea()
+void MaxTreeBerger::computeArea() const
 {
 	for (int i = image.cols * image.rows - 1; i > 0; i--)
 	{
@@ -194,7 +187,7 @@ void MaxTreeBerger::computeArea()
 	}
 }
 
-void MaxTreeBerger::computeBoundingBoxes()
+void MaxTreeBerger::computeBoundingBoxes() const
 {
 	for (int i = image.cols * image.rows - 1; i >= 0; i--)
 	{
@@ -204,7 +197,19 @@ void MaxTreeBerger::computeBoundingBoxes()
 	}
 }
 
-void MaxTreeBerger::extractRoi(cv::Mat& roi, SetUFPix* p)
+void MaxTreeBerger::extractRoiMask(cv::Mat& roi, SetUFPix* p) const
+{
+	int x, y;
+	x = p->params.min_x;
+	y = p->params.min_y;
+	extractRoi(roi, p);
+	cv::threshold(roi, roi, p->item.value - 1, 1, CV_THRESH_BINARY);
+	cv::Point CC_p(p->item.point.x - x, p->item.point.y - y);
+	cv::floodFill(roi, CC_p, cv::Scalar(255), 0, cv::Scalar(0), cv::Scalar(0), 8);
+	cv::threshold(roi, roi, 254, 255, CV_THRESH_BINARY);
+}
+
+void MaxTreeBerger::extractRoi(cv::Mat & roi, SetUFPix * p) const
 {
 	int x, y, w, h;
 	x = p->params.min_x;
@@ -212,20 +217,26 @@ void MaxTreeBerger::extractRoi(cv::Mat& roi, SetUFPix* p)
 	w = p->params.max_x - x + 1;
 	h = p->params.max_y - y + 1;
 	roi = image(cv::Rect(x, y, w, h)).clone();
-	cv::threshold(roi, roi, p->item.value - 1, 1, CV_THRESH_BINARY);
-	cv::Point CC_p(p->item.point.x - x, p->item.point.y - y);
-	cv::floodFill(roi, CC_p, cv::Scalar(255), 0, cv::Scalar(0), cv::Scalar(0), 8);
-	cv::threshold(roi, roi, 254, 255, CV_THRESH_BINARY);
 }
 
-void MaxTreeBerger::extractCanonicalLevels(std::string& path)
+void MaxTreeBerger::extractRoi(cv::Mat& image, cv::Mat& roi, SetUFPix* p)
+{
+	int x, y, w, h;
+	x = p->params.min_x;
+	y = p->params.min_y;
+	w = p->params.max_x - x + 1;
+	h = p->params.max_y - y + 1;
+	roi = image(cv::Rect(x, y, w, h)).clone();
+}
+
+void MaxTreeBerger::extractCanonicalLevels(std::string& path) const
 {
 	cv::Mat roi;
 	for (int i = 0; i < pix_count; i++)
 	{
 		SetUF<PixelDataCarrier>* p = S[i];
 		if (p->isCanonical) {
-			extractRoi(roi, p);
+			extractRoiMask(roi, p);
 			cv::imwrite(path + std::to_string(i) + ".png", roi);
 		}
 	}
@@ -233,18 +244,29 @@ void MaxTreeBerger::extractCanonicalLevels(std::string& path)
 
 void MaxTreeBerger::areaOpening(int area)
 {
-	computeArea();
 	for (int i = 0; i < image.cols * image.rows; i++)
 	{
 		SetUF<PixelDataCarrier>* p = S[i];
+		SetUF<PixelDataCarrier>* q = p->parent;
+		
+		if (!q->isActive)
+		{
+			p->item.value = q->item.value;
+			p->isActive = false;
+		}
 		if (p->isCanonical)
 		{
 			if (p->params.area < area)
 			{
 				p->isActive = false;
+				p->item.value = q->item.value;
 			}
 		}
 	}
+	canonicalize();
+	computeArea();
+	computeBoundingBoxes();
+	reconstruct();
 }
 
 MaxTreeBerger::~MaxTreeBerger()

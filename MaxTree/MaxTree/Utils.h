@@ -13,3 +13,6 @@ void addRoiToImage(cv::Mat& image, cv::Mat& roi, SetUFPix* p);
 
 // blends 2 mask into rgb image
 cv::Mat blend(cv::Mat& image, cv::Mat overlay);
+
+void fillHoles(cv::Mat image);
+void removeEdgeObjs(cv::Mat image);

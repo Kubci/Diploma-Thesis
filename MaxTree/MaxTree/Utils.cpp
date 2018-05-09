@@ -125,3 +125,38 @@ cv::Mat blend(cv::Mat & image, cv::Mat overlay)
 	return output;
 }
 
+//binary image expected
+void fillHoles(cv::Mat image)
+{
+	cv::Mat inv; 
+	cv::bitwise_not(image, inv);
+	removeEdgeObjs(inv);
+	image += inv;
+}
+
+void removeEdgeObjs(cv::Mat image)
+{
+	for (int y = 0; y < image.rows; y++)
+	{
+		uchar* row = image.ptr(y);
+		for (int x = 0; x < image.cols; x++)
+		{
+			if (y != 0 && y != image.rows - 1)
+			{
+				if(row[x])
+				{
+					cv::floodFill(image, cv::Point(x, y), 0);
+				}
+				x += image.cols - 2;
+			}
+			else
+			{
+				if (row[x])
+				{
+					cv::floodFill(image, cv::Point(x, y), 0);
+				}
+			}
+		}
+	}
+}
+

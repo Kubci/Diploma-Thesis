@@ -9,9 +9,9 @@ void compareToGT(MaxTreeBerger& m_tree, ParamsGT& gt)
 		SetUF<PixelDataCarrier>* p = m_tree.S[i];
 		if (p->isCanonical)
 		{
-			if (p->size < 0.8*gt.min_area || p->size > 1.2*gt.max_area) continue;
+			if (p->params.area < 0.8*gt.min_area || p->params.area > 1.2*gt.max_area) continue;
 
-			m_tree.extractRoi(roi, p);
+			m_tree.extractRoiMask(roi, p);
 			centroid(roi, p, cct_centroid);
 
 			int label = gt.getClosestLabel(cct_centroid);
@@ -69,7 +69,7 @@ cv::Mat findBestGlobalJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& 
 				{
 					if (p->params.jaccard > 0.01)
 					{
-						m_tree.extractRoi(roi, p);
+						m_tree.extractRoiMask(roi, p);
 						addRoiToImage(result, roi, p);
 					}
 				}
@@ -117,7 +117,7 @@ cv::Mat exportBestRois(MaxTreeBerger& m_tree, ParamsGT & gt, std::string& path, 
 		if (index < 0) continue;
 
 		SetUF<PixelDataCarrier>* p = m_tree.S[(int)index];
-		m_tree.extractRoi(roi, p);
+		m_tree.extractRoiMask(roi, p);
 
 		addRoiToImage(overlay, roi, p);
 

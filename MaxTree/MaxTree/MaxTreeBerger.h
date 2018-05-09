@@ -10,7 +10,6 @@ class MaxTreeBerger
 {
 public:
 	cv::Mat image;
-	cv::Mat reconstructed;
 	SetUF<PixelDataCarrier>** S = nullptr;
 	int pix_count = 0;
 	int can_count = 0;
@@ -18,15 +17,19 @@ public:
 	MaxTreeBerger(cv::Mat& image);
 	void reconstruct();
 	void areaOpening(int area);
-	void extractCanonicalLevels(std::string& path);
-	void extractRoi(cv::Mat& roi, SetUFPix* c_node);
+	void extractCanonicalLevels(std::string& path) const;
+	void extractRoiMask(cv::Mat& roi, SetUFPix* c_node) const;
+	void extractRoi(cv::Mat& roi, SetUFPix* c_node) const;
+	static void extractRoi(cv::Mat& image, cv::Mat& roi, SetUFPix* c_node);
 	~MaxTreeBerger();
 
 private:
 	SetUF<PixelDataCarrier>* dealocate;
+	// called in constructor
 	void canonicalize();
-	void computeArea();
-	void computeBoundingBoxes();
+	void computeArea() const;
+	void computeBoundingBoxes() const;
+	// else
 	void canonicalLeafs() const;
 	void retrievePixelsAsVector(std::vector<PixelDataCarrier*> &pixels);
 	int index(cv::Point& p) const;

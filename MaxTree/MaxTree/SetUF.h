@@ -13,16 +13,13 @@ public:
 
 	T									item;
 	int									rank = 0;
-	int									size = 1;
 	SetUF<T>*							parent = this;
 	Parameters							params;
 	bool								isActive = true;
 	bool								isCanonical = false;
 	bool								isCanLeaf = true;
 	int									canIndex = -1;
-
 	bool useThis = false;
-	
 
 	static SetUF<T>* makeSet(T item);
 	static SetUF<T>* unionByRank(SetUF<T>* first, SetUF<T>* second);
@@ -68,7 +65,6 @@ SetUF<T>* SetUF<T>::unionByRank(SetUF<T>* first, SetUF<T>* second)
 	{
 		repre_first->rank += 1;
 	}
-	repre_first->size += repre_second->size;
 
 	return repre_first;
 }
@@ -82,7 +78,6 @@ inline SetUF<T>* SetUF<T>::unionInOrder(SetUF<T>* first, SetUF<T>* second)
 	}
 
 	second->parent = first;
-	first->size += second->size;
 	return first;
 }
 
