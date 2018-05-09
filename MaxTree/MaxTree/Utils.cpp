@@ -106,18 +106,18 @@ cv::Mat blend(cv::Mat & image, cv::Mat overlay)
 		for (int x = 0; x < image.cols; x++)
 		{
 			int idx = x * 3;
-			int val = row_o[x];
+			int val = ((bool)row_i[x]);
 			if (!row_o[x])
 			{
-				row_op[idx]		= row_i[x] * 255;
-				row_op[idx + 1] = row_i[x] * 255;
-				row_op[idx + 2] = row_i[x] * 255;
+				row_op[idx]		= val * 255;
+				row_op[idx + 1] = val * 255;
+				row_op[idx + 2] = val * 255;
 			}
 			else
 			{ //chyba 
-				row_op[idx]		= row_i[x] * 128;
-				row_op[idx + 1] = row_i[x] * 128;
-				row_op[idx + 2] = std::min(255, (row_i[x] * 128) + (row_o[x] * 128));
+				row_op[idx]		= val * 128;
+				row_op[idx + 1] = val * 128;
+				row_op[idx + 2] = std::min(255, 128 + (val * 128));
 			}
 		}
 	}

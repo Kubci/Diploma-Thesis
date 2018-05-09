@@ -36,10 +36,7 @@ cv::Mat rutine(std::string& gt_path, std::string& image_path, std::string& name,
 	{
 		cv::dilate(gt, gt, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)));
 	}
-	if (name.compare("01") == 0) 
-	{
-		int brejk = 0;
-	}
+
 	if (image.cols == 0 || image.rows == 0) return cv::Mat();
 
 	ParamsGT gtp(gt);
