@@ -9,6 +9,7 @@
 #include "dirent.h"
 #include <iostream>
 #include <fstream>
+#include "AutomaticSegmentation.h"
 
 void contentsOFFolder(std::vector<std::string>& names, std::string& path) {
 	DIR *dir;
@@ -59,6 +60,22 @@ cv::Mat rutine(std::string& gt_path, std::string& image_path, std::string& name,
 	return cv::Mat();
 }
 
+void automaticSegmentation(std::string& gt_path, std::string& image_path, std::string& name, std::string& path2, std::ofstream& file, std::string& folder)
+{
+	cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_ANYDEPTH);
+
+	if (image.cols == 0 || image.rows == 0) return;
+
+	convertTo8BitImage(image);
+	MaxTreeBerger m_tree(image);
+	m_tree.areaOpening(50);
+
+	AutomaticSegmentation sgm;
+	cv::Mat result = sgm.segmentByEdges(m_tree);
+
+	cv::imwrite(path2 + "\\res4\\" + name + "_aut_seg.png", result*255);
+}
+
 void evalueteInFolder(std::string& path) {
 	DIR *dir;
 
@@ -94,8 +111,8 @@ void evalueteInFolder(std::string& path) {
 			std::string gt_path = path2 + "GT\\" + name + "_gt.tif";
 			std::string image_path = path2 + name + ".tif";
 
-			cv::Mat r1 = rutine(gt_path, image_path, name, path2, file, s);
-
+			//cv::Mat r1 = rutine(gt_path, image_path, name, path2, file, s);
+			automaticSegmentation(gt_path, image_path, name, path2, file, s);
 			//cv::imwrite(path2 + "\\res3\\" + name + "_overlay.png", r1);
 		}
 		file.close();

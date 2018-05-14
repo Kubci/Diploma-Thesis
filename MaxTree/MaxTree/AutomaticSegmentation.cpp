@@ -78,7 +78,11 @@ cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 	Sobel(m_tree.image, dy, CV_32FC1, 0, 1);
 
 	cv::Mat gm;
+	cv::Mat gm_t;
 	magnitude(dx, dy, gm);
+	convertTo8BitImage(gm);
+	cv::threshold(gm, gm_t, 0, 1, CV_THRESH_OTSU);
+	//cv::adaptiveThreshold(gm, gm_t, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 11, 0);
 
 	cv::Mat roi;
 	cv::Mat roi_m;
@@ -92,7 +96,7 @@ cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 		if (p->isCanonical)
 		{
 			//extract rois;
-			m_tree.extractRoi(gm, roi, p);
+			m_tree.extractRoi(gm_t, roi, p);
 			m_tree.extractRoiMask(roi_m, p);
 
 			//get edge
@@ -103,12 +107,16 @@ cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 			cv::dilate(roi_m, roi_m, elem);
 
 			//extract edge values
-			roi_m.convertTo(roi_m, CV_32FC1, 1.0 / 255.0);
+			//roi_m.convertTo(roi_m, CV_32FC1, 1.0 / 255.0);
 			roi_m = roi.mul(roi_m);
 
-			float val = cv::sum(roi_m)[0];
+			float val = cv::sum(roi_m)[0] / 255;
+			val = val - (roi.cols*roi.rows - val)*0.001;
 			if (val > gmSumsDP[p->canIndex])
 			{
+				if(p->canIndex == 18){
+					int pica = 0;
+				}
 				gmSumsDP[q->canIndex] += val;
 				p->useThis = true;
 			}
@@ -134,6 +142,7 @@ cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 			{
 				if (p->useThis)
 				{
+					float val = gmSumsDP[p->canIndex];
 					m_tree.extractRoiMask(roi_m, p);
 					addRoiToImage(result, roi_m, p);
 				}
@@ -141,8 +150,7 @@ cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 		}
 	}
 
-	delete[] gmSums;
-	delete[] gmSums;
+	delete[] gmSumsDP;
 
 	return result;
 }
