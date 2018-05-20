@@ -26,7 +26,7 @@ void contentsOFFolder(std::vector<std::string>& names, std::string& path) {
 	}
 }
 
-cv::Mat rutine(std::string& gt_path, std::string& image_path, std::string& name, std::string& path2, std::ofstream& file, std::string& folder) {
+void segmentationToGT(std::string& gt_path, std::string& image_path, std::string& name, std::string& path2, std::ofstream& file, std::string& folder) {
 
 	cv::Mat gt = cv::imread(gt_path, CV_LOAD_IMAGE_ANYDEPTH);
 	cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_ANYDEPTH);
@@ -38,7 +38,7 @@ cv::Mat rutine(std::string& gt_path, std::string& image_path, std::string& name,
 		cv::dilate(gt, gt, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)));
 	}
 
-	if (image.cols == 0 || image.rows == 0) return cv::Mat();
+	if (image.cols == 0 || image.rows == 0) return;
 
 	ParamsGT gtp(gt);
 	MaxTreeBerger m_tree(image);
@@ -47,17 +47,14 @@ cv::Mat rutine(std::string& gt_path, std::string& image_path, std::string& name,
 	cv::Mat r1 = exportBestRois(m_tree, gtp, path2 + "\\res3\\", name, file);
 	cv::Mat r2 = findBestGlobalJaccard(m_tree, gtp, path2 + "\\res2\\", name, file);
 
-	cv::Mat o1 = blend(r2, r1);
-	cv::Mat o2 = blend(gt, r1);
-	cv::Mat o3 = blend(gt, r2);
-
+	cv::threshold(r2, r2, 0.1, 255, cv::THRESH_BINARY);
+	cv::threshold(r1, r1, 0.1, 255, cv::THRESH_BINARY);
 	cv::imwrite(path2 + "\\res3\\" + name + "_globalJ.png", r2);
 	cv::imwrite(path2 + "\\res3\\" + name + "_singleJ.png", r1);
 	cv::imwrite(path2 + "\\res3\\" + name + "_singleJ_over_globalJ.png", blend(r2, r1));
 	cv::imwrite(path2 + "\\res3\\" + name + "_singleJ_over_GT.png", blend(gt, r1));
 	cv::imwrite(path2 + "\\res3\\" + name + "_globalJ_over_GT.png", blend(gt, r2));
 
-	return cv::Mat();
 }
 
 void automaticSegmentation(std::string& gt_path, std::string& image_path, std::string& name, std::string& path2, std::ofstream& file, std::string& folder)
@@ -72,8 +69,19 @@ void automaticSegmentation(std::string& gt_path, std::string& image_path, std::s
 
 	AutomaticSegmentation sgm;
 	cv::Mat result = sgm.segmentByEdges(m_tree);
+	threshold(result, result, 0.1, 255, cv::THRESH_BINARY);
+	cv::imwrite(path2 + "\\res4\\" + name + "_aut_seg.png", result);
+}
 
-	cv::imwrite(path2 + "\\res4\\" + name + "_aut_seg.png", result*255);
+void transform(std::string& gt_path, std::string& image_path, std::string& name, std::string& path2, std::ofstream& file, std::string& folder)
+{
+	cv::Mat image = cv::imread(image_path, CV_LOAD_IMAGE_ANYDEPTH);
+
+	if (image.cols == 0 || image.rows == 0) return;
+
+	convertTo8BitImage(image);
+	cv::threshold(image, image, 0.1, 255, cv::THRESH_BINARY);
+	cv::imwrite(path2 + "\\" + name + ".jpg", image);
 }
 
 void evalueteInFolder(std::string& path) {
@@ -111,9 +119,9 @@ void evalueteInFolder(std::string& path) {
 			std::string gt_path = path2 + "GT\\" + name + "_gt.tif";
 			std::string image_path = path2 + name + ".tif";
 
-			//cv::Mat r1 = rutine(gt_path, image_path, name, path2, file, s);
+			segmentationToGT(gt_path, image_path, name, path2, file, s);
 			automaticSegmentation(gt_path, image_path, name, path2, file, s);
-			//cv::imwrite(path2 + "\\res3\\" + name + "_overlay.png", r1);
+			//transform(gt_path, image_path, name, path2, file, s);
 		}
 		file.close();
 	}

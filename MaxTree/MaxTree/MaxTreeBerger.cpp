@@ -8,13 +8,11 @@ MaxTreeBerger::MaxTreeBerger(cv::Mat & image) : image(image)
 	SetUF<PixelDataCarrier>** repr	= new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // pointer from root of component in zpar to root of the same component in tree hierarchy;
 	SetUF<PixelDataCarrier>** zpar  = new SetUF<PixelDataCarrier>*[image.rows * image.cols]{ 0 }; // structure to track connected components effectively
 
-	// toto sa da zoptimalizovat
 	std::vector<PixelDataCarrier* > pixels;
 	std::vector<PixelDataCarrier* > pixels_sorted(pixels);
 	retrievePixelsAsVector(pixels);
 	RadixSort(pixels, pixels_sorted, 8);
-
-	// Optimalization, so 
+ 
 	SetUF<PixelDataCarrier>* parent_sets = new SetUF<PixelDataCarrier>[image.rows * image.cols];
 	SetUF<PixelDataCarrier>* zpar_sets	= new SetUF<PixelDataCarrier>[image.rows * image.cols];
 	for (PixelDataCarrier* p : pixels) {

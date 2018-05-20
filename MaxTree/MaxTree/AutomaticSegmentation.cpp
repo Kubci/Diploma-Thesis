@@ -1,6 +1,5 @@
 #include "AutomaticSegmentation.h"
 
-
 cv::Mat AutomaticSegmentation::segmentByMaxEdges(MaxTreeBerger& m_tree)
 {
 	gmSums = new float[m_tree.can_count]{ 0 };
@@ -70,7 +69,6 @@ cv::Mat AutomaticSegmentation::segmentByMaxEdges(MaxTreeBerger& m_tree)
 
 cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 {
-	//gmSums = new float[m_tree.can_count]{ 0 };
 	gmSumsDP = new float[m_tree.can_count]{ 0 };
 
 	cv::Mat dx, dy;
@@ -82,7 +80,6 @@ cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 	magnitude(dx, dy, gm);
 	convertTo8BitImage(gm);
 	cv::threshold(gm, gm_t, 0, 1, CV_THRESH_OTSU);
-	//cv::adaptiveThreshold(gm, gm_t, 1, cv::ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 11, 0);
 
 	cv::Mat roi;
 	cv::Mat roi_m;
@@ -99,19 +96,15 @@ cv::Mat AutomaticSegmentation::segmentByEdges(MaxTreeBerger& m_tree)
 			m_tree.extractRoi(gm_t, roi, p);
 			m_tree.extractRoiMask(roi_m, p);
 
-			//get edge
-			//fillHoles(roi_m);
-
 			cv::erode(roi_m, tmp, elem, cv::Point(-1,-1), 1, cv::BORDER_CONSTANT, cv::Scalar(0));
 			roi_m = roi_m - tmp;
 			cv::dilate(roi_m, roi_m, elem);
 
-			//extract edge values
-			//roi_m.convertTo(roi_m, CV_32FC1, 1.0 / 255.0);
+			float pix_count = (float) cv::sum(roi_m)[0] / 255;
 			roi_m = roi.mul(roi_m);
 
-			float val = cv::sum(roi_m)[0] / 255;
-			val = val - (roi.cols*roi.rows - val)*0.001;
+			float val = (float) cv::sum(roi_m)[0] / 255;
+			val = (float) (val - (pix_count - val)*0.001);
 			if (val > gmSumsDP[p->canIndex])
 			{
 				if(p->canIndex == 18){

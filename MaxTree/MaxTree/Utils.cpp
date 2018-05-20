@@ -1,39 +1,5 @@
 #include "Utils.h"
 
-void AddComponentToImage(cv::Mat& reconstructed, cv::Mat& labelled_level, int label)
-{
-	for (int y = 0; y < labelled_level.rows; y++)
-	{
-		uchar* row_r = (uchar*)reconstructed.ptr(y);
-		int* row_l = (int*)labelled_level.ptr(y);
-
-		for (int x = 0; x < labelled_level.cols; x++)
-		{
-			if (row_l[x] == label)
-			{
-				row_r[x] += 1;
-			}
-		}
-	}
-}
-
-void AddComponentsToImage(cv::Mat& reconstructed, cv::Mat& labelled_level, std::vector<bool>& labels)
-{
-	for (int y = 0; y < labelled_level.rows; y++)
-	{
-		uchar* row_r = (uchar*)reconstructed.ptr(y);
-		int* row_l = (int*)labelled_level.ptr(y);
-
-		for (int x = 0; x < labelled_level.cols; x++)
-		{
-			if (labels[row_l[x]])
-			{
-				row_r[x] += 1;
-			}
-		}
-	}
-}
-
 void convertTo8BitImage(cv::Mat & image)
 {
 	double min, max;
@@ -106,7 +72,7 @@ cv::Mat blend(cv::Mat & image, cv::Mat overlay)
 		for (int x = 0; x < image.cols; x++)
 		{
 			int idx = x * 3;
-			int val = ((bool)row_i[x]);
+			bool val = ((bool)row_i[x]);
 			if (!row_o[x])
 			{
 				row_op[idx]		= val * 255;
@@ -114,7 +80,7 @@ cv::Mat blend(cv::Mat & image, cv::Mat overlay)
 				row_op[idx + 2] = val * 255;
 			}
 			else
-			{ //chyba 
+			{  
 				row_op[idx]		= val * 128;
 				row_op[idx + 1] = val * 128;
 				row_op[idx + 2] = std::min(255, 128 + (val * 128));

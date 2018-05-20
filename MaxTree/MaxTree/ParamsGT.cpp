@@ -9,8 +9,6 @@ ParamsGT::ParamsGT(cv::Mat gt)
 
 ParamsGT::~ParamsGT()
 {
-	//delete[] labelCounter;
-	//delete[] labelCounterDP;
 }
 
 void ParamsGT::freeLabelCounter()
@@ -151,7 +149,7 @@ float ParamsGT::computeJaccardLC(SetUFPix* p) const
 		}
 
 	}
-	_union += _inter + labelCounter[c_idx];
+	_union += labelCounter[c_idx];
 	if (_union == 0) return 0;
 	return static_cast<float>(_inter) / static_cast<float>(_union);
 }
@@ -161,8 +159,8 @@ bool ParamsGT::intersestOneGTCompLC(SetUFPix* p, int* label) const
 	int c_idx = LCIdx(p->canIndex);
 	bool det = false;
 
-	//if (labelCounter[c_idx]) return false;
-
+	//i = 0 forbids background hit
+	//i = 1 allows it
 	for (int i = 1; i < labelsCount; i++)
 	{
 		int val = labelCounter[c_idx + i];
@@ -199,7 +197,7 @@ float ParamsGT::computeJaccardLCDP(SetUFPix* p) const
 		}
 
 	}
-	_union += _inter + labelCounterDP[c_idx];
+	_union += labelCounterDP[c_idx];
 	if (_union == 0) return 0;
 	return static_cast<float>(_inter) / static_cast<float>(_union);
 }

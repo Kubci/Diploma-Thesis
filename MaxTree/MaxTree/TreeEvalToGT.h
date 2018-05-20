@@ -1,4 +1,4 @@
-#pragma 
+#pragma once
 #include "ParamsGT.h"
 #include "MaxTreeBerger.h"
 

@@ -38,7 +38,7 @@ cv::Mat findBestGlobalJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& 
 		{
 			p->params.jaccard = gt.computeJaccardLC(p);
 			p->params.jaccardDP = gt.computeJaccardLCDP(p);
-			if (p->params.jaccard >= p->params.jaccardDP)
+			if (p->params.jaccard > p->params.jaccardDP)
 			{
 				p->useThis = true;
 				gt.pushJaccardToParentDP(p, true);
@@ -96,10 +96,10 @@ void findBestSingleJaccard(MaxTreeBerger& m_tree, ParamsGT& gt, std::string& pat
 			if (gt.intersestOneGTCompLC(p, &label))
 			{
 				float jaccard = gt.best_cct.at<float>(label, 0);
-				if (p->params.jaccard >= jaccard)
+				if (p->params.jaccard > jaccard)
 				{
 					gt.best_cct.at<float>(label, 0) = p->params.jaccard;
-					gt.best_cct.at<float>(label, 1) = i;
+					gt.best_cct.at<float>(label, 1) = (float) i;
 				}
 			}
 		}
